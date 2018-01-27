@@ -10,7 +10,7 @@ type Aggregate interface {
 	// ApplyEvent applies an event that has occurred to the aggregate
 	// instance to mutate its state. Events that are not recognized are
 	// ignored, and all event application is fail-safe.
-	ApplyEvent(interface{})
+	ApplyEvent(Event)
 
 	// Commit commits the state of the aggregate, persisting any
 	// new events to the store.
@@ -22,6 +22,21 @@ type Aggregate interface {
 
 	// GetState gets the state of an aggregate
 	GetState() interface{}
+}
+
+// Command is an interface that describes commands common attributes
+type Command interface {
+}
+
+// CommandHandler is an interface that describes the operations available on
+// an instance that can follow the command-handler pattern.
+type CommandHandler interface {
+	// Handle a command, returning the resultant events (or an error)
+	Handle(command Command) ([]Event, error)
+}
+
+// Event is an interface that describes common attributes of events.
+type Event interface {
 }
 
 // EventDefinition defines the structure of an event.
@@ -41,7 +56,7 @@ type EventDetector func(interface{}) bool
 
 // EventFactory is a function that creates an event instance of a
 // given type, ready to work with.
-type EventFactory func() interface{}
+type EventFactory func() Event
 
 // EventType is a string alias that represents the type of an event.
 type EventType string
@@ -50,13 +65,13 @@ type EventType string
 // known to a specific aggregate.
 type EventRegistry interface {
 	// CreateEvent creates an instance of an event
-	CreateEvent(EventType) interface{}
+	CreateEvent(EventType) Event
 
 	// GetEventType determines the EventType of an event
 	GetEventType(interface{}) (EventType, bool)
 
 	// RegisterEvent registers an event
-	RegisterEvent(interface{}) EventType
+	RegisterEvent(Event) EventType
 }
 
 // EventStore defines the behaviours of a store that can load/save event streams

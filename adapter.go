@@ -34,7 +34,7 @@ type StoreLoaderAdapter interface {
 	AdapterWithEvents
 
 	// ReplayEvent applies an event that has already been persisted
-	ReplayEvent(event interface{})
+	ReplayEvent(event Event)
 
 	// RestoreSnapshot applies a snapshot state, if available
 	RestoreSnapshot(sequence int64, state interface{}) error
@@ -48,7 +48,7 @@ type StoreWriterAdapter interface {
 	// GetUncomittedEvent gets the committed sequence number, and any
 	// events that have been added since hte last commit. This can been
 	// used by a backing store to write data.
-	GetUncomittedEvents() (int64, []interface{})
+	GetUncomittedEvents() (int64, []Event)
 
 	// GetState returns the state of the aggregate in it's current
 	// sequence/position, which may be required when snapshotting.

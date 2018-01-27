@@ -28,7 +28,7 @@ type AggregateBase struct {
 	sequenceNumber int64
 
 	// eventReplay is a map of event replay functions
-	eventReplay map[EventType]func(interface{})
+	eventReplay map[EventType]func(Event)
 
 	// eventRegistry is the instance of EventRegistry that
 	// defines our events.
@@ -40,7 +40,7 @@ type AggregateBase struct {
 
 	// uncomittedEvents are events that have not been put into
 	// a backing store yet.
-	uncomittedEvents []interface{}
+	uncomittedEvents []Event
 
 	// stateFunc is a function reference that loads the state of an object.
 	// This is required because we generally only have a reference to the
@@ -55,9 +55,9 @@ func (agg *AggregateBase) Initialize(key string, registry EventRegistry, store E
 	agg.sequenceNumber = 0
 	agg.committedSequenceNumber = 0
 	agg.eventRegistry = registry
-	agg.eventReplay = make(map[EventType]func(interface{}))
+	agg.eventReplay = make(map[EventType]func(Event))
 	agg.eventStore = store
-	agg.uncomittedEvents = make([]interface{}, 0)
+	agg.uncomittedEvents = make([]Event, 0)
 	agg.stateFunc = state
 }
 
@@ -93,13 +93,13 @@ func (agg *AggregateBase) AutomaticWireup(subject interface{}) {
 // ApplyEvent applies an event that has occurred to the aggregate base
 // instance to mutate its state. Events that are not recognized are
 // ignored, and all event application should be fail-safe.
-func (agg *AggregateBase) ApplyEvent(event interface{}) {
+func (agg *AggregateBase) ApplyEvent(event Event) {
 	agg.applyEventInternal(event)
 	agg.uncomittedEvents = append(agg.uncomittedEvents, event)
 }
 
 // applyEventInternal applies an event internally
-func (agg *AggregateBase) applyEventInternal(event interface{}) {
+func (agg *AggregateBase) applyEventInternal(event Event) {
 	defer func() {
 		agg.sequenceNumber++
 	}()
@@ -125,7 +125,7 @@ func (agg *AggregateBase) applyEventInternal(event interface{}) {
 }
 
 // DefineReplayMethod defines a method that replays events of a given event type.
-func (agg *AggregateBase) DefineReplayMethod(eventType EventType, replay func(interface{})) {
+func (agg *AggregateBase) DefineReplayMethod(eventType EventType, replay func(Event)) {
 	agg.eventReplay[eventType] = replay
 }
 
@@ -163,7 +163,7 @@ func (agg *AggregateBase) Commit() error {
 	}
 
 	// Clear the uncomittedEvents array
-	agg.uncomittedEvents = make([]interface{}, 0)
+	agg.uncomittedEvents = make([]Event, 0)
 	agg.committedSequenceNumber = agg.sequenceNumber
 	return nil
 }
@@ -182,8 +182,8 @@ func (agg *AggregateBase) isDirty() bool {
 // buildReplayMappings builds a set of event replay mappings for a type that has
 // methods of a suitable interface. This allows wireup-by-convention for the base
 // aggregate type.
-func buildReplayMappings(subject interface{}) map[EventType]func(interface{}) {
-	eventReplay := make(map[EventType]func(interface{}))
+func buildReplayMappings(subject interface{}) map[EventType]func(Event) {
+	eventReplay := make(map[EventType]func(Event))
 	subjectType := reflect.TypeOf(subject)
 	totalMethods := subjectType.NumMethod()
 	for methodIndex := 0; methodIndex < totalMethods; methodIndex++ {
@@ -199,7 +199,7 @@ func buildReplayMappings(subject interface{}) map[EventType]func(interface{}) {
 			continue
 		}
 
-		handler := func(event interface{}) {
+		handler := func(event Event) {
 			candidate.Func.Call([]reflect.Value{
 				reflect.ValueOf(subject),
 				reflect.ValueOf(event),
@@ -243,7 +243,7 @@ func (adapter *aggregateBaseLoaderAdapter) IsDirty() bool {
 }
 
 // ReplayEvent replays an event that has already been persisted
-func (adapter *aggregateBaseLoaderAdapter) ReplayEvent(event interface{}) {
+func (adapter *aggregateBaseLoaderAdapter) ReplayEvent(event Event) {
 	adapter.aggregate.applyEventInternal(event)
 	adapter.aggregate.committedSequenceNumber++
 }
@@ -286,7 +286,7 @@ func (adapter *aggregateBaseStoreAdapter) GetEventRegistry() EventRegistry {
 }
 
 // GetUncomittedEvents fetches the uncommitted events of this aggregate
-func (adapter *aggregateBaseStoreAdapter) GetUncomittedEvents() (int64, []interface{}) {
+func (adapter *aggregateBaseStoreAdapter) GetUncomittedEvents() (int64, []Event) {
 	return adapter.aggregate.committedSequenceNumber, adapter.aggregate.uncomittedEvents
 }
 

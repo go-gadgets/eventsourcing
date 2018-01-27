@@ -17,7 +17,7 @@ func NewStandardEventRegistry() EventRegistry {
 }
 
 // CreateEvent creates a new instance of the specified event type.
-func (reg standardEventRegistry) CreateEvent(eventType EventType) interface{} {
+func (reg standardEventRegistry) CreateEvent(eventType EventType) Event {
 	// Look for the type in the known types map
 	entry, exists := reg.events[eventType]
 
@@ -32,7 +32,7 @@ func (reg standardEventRegistry) CreateEvent(eventType EventType) interface{} {
 }
 
 // RegisterEvent registers an event type with the registry
-func (reg standardEventRegistry) RegisterEvent(event interface{}) EventType {
+func (reg standardEventRegistry) RegisterEvent(event Event) EventType {
 	eventTypeValue := reflect.TypeOf(event)
 	eventTypeName := eventTypeValue.String()
 	eventType := EventType(eventTypeName)

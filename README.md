@@ -92,7 +92,7 @@ In this example we have:
  - A registry
    - A registry identifies the types of events that apply to a model, acting as a helper for mapping stored events back to real types.
  - CounterAggregate
-   - Our aggregate-root type, which leverages the goincidence.AggregateBase type for implementing some common functionality.
+   - Our aggregate-root type, which leverages the eventsourcing.AggregateBase type for implementing some common functionality.
  - IncrementEvent
    - An event that when replayed, bumps the count up.
 

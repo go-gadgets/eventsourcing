@@ -89,7 +89,7 @@ func TestBaseAggregateDefineReplayMethod(t *testing.T) {
 	assert.Equal(t, int64(1), instance.SequenceNumber(), "The aggregate sequence number should be 1")
 	assert.Equal(t, 0, instance.TargetValue, "The aggregate target value should be 0")
 
-	instance.DefineReplayMethod(eventType, func(evt interface{}) {
+	instance.DefineReplayMethod(eventType, func(evt Event) {
 		instance.TargetValue *= 2
 	})
 

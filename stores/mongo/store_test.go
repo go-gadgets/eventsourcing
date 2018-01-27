@@ -14,7 +14,7 @@ type MongoStoreWriter struct {
 	key              string
 	eventRegistry    eventsourcing.EventRegistry
 	uncomittedOrigin int64
-	uncomittedEvents []interface{}
+	uncomittedEvents []eventsourcing.Event
 }
 
 // GetState fetches the aggregate state. In this test, it's a dummy implementation
@@ -33,7 +33,7 @@ func (instance *MongoStoreWriter) GetEventRegistry() eventsourcing.EventRegistry
 }
 
 // GetUncomittedEvents gets the events that are uncomittedEvents for this aggregate.
-func (instance *MongoStoreWriter) GetUncomittedEvents() (int64, []interface{}) {
+func (instance *MongoStoreWriter) GetUncomittedEvents() (int64, []eventsourcing.Event) {
 	return instance.uncomittedOrigin, instance.uncomittedEvents
 }
 
@@ -112,11 +112,11 @@ func TestMongoStoreAppendNonExist(t *testing.T) {
 		return
 	}
 	defer cleanup()
-	exampleEvents := make([]interface{}, 1)
-	exampleEvents[0] =
+	exampleEvents := []eventsourcing.Event{
 		InitializeEvent{
 			TargetValue: 3,
-		}
+		},
+	}
 	err := store.CommitEvents(&MongoStoreWriter{
 		key:              "dummy-key",
 		eventRegistry:    counterRegistry,
@@ -135,11 +135,12 @@ func TestMongoStoreAppendPastEnd(t *testing.T) {
 		return
 	}
 	defer cleanup()
-	exampleEvents := make([]interface{}, 1)
-	exampleEvents[0] =
+	exampleEvents := []eventsourcing.Event{
 		InitializeEvent{
 			TargetValue: 3,
-		}
+		},
+	}
+
 	err := store.CommitEvents(&MongoStoreWriter{
 		key:              "dummy-key",
 		eventRegistry:    counterRegistry,
@@ -166,7 +167,7 @@ func TestMongoStoreErrorOnUnmapped(t *testing.T) {
 		return
 	}
 	defer cleanup()
-	exampleEvents := make([]interface{}, 1)
+	exampleEvents := make([]eventsourcing.Event, 1)
 	exampleEvents[0] =
 		UnknownEventTypeExample{}
 	err := store.CommitEvents(&MongoStoreWriter{

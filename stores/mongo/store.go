@@ -147,7 +147,7 @@ func (store *mongoDBEventStore) Refresh(adapter eventsourcing.StoreLoaderAdapter
 	}
 
 	// Rehydate events
-	toApply := make([]interface{}, len(loaded))
+	toApply := make([]eventsourcing.Event, len(loaded))
 	for index, event := range loaded {
 		summoned := reg.CreateEvent(event.EventType)
 		errDecode := mapstructure.Decode(event.EventData, summoned)

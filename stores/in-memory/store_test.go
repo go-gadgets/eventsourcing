@@ -12,7 +12,7 @@ type testStoreWriter struct {
 	key              string
 	eventRegistry    eventsourcing.EventRegistry
 	uncomittedOrigin int64
-	uncomittedEvents []interface{}
+	uncomittedEvents []eventsourcing.Event
 }
 
 // GetKey gets the key of the aggregate being stored
@@ -26,7 +26,7 @@ func (instance *testStoreWriter) GetEventRegistry() eventsourcing.EventRegistry 
 }
 
 // GetUncomittedEvents gets the events that are uncomittedEvents for this aggregate.
-func (instance *testStoreWriter) GetUncomittedEvents() (int64, []interface{}) {
+func (instance *testStoreWriter) GetUncomittedEvents() (int64, []eventsourcing.Event) {
 	return instance.uncomittedOrigin, instance.uncomittedEvents
 }
 
@@ -77,11 +77,11 @@ func TestMemoryStoreCommitReload(t *testing.T) {
 // sequence 0 for an aggregate that does not exist.
 func TestMemoryStoreAppendNonExisting(t *testing.T) {
 	store := NewStore()
-	exampleEvents := make([]interface{}, 1)
-	exampleEvents[0] =
+	exampleEvents := []eventsourcing.Event{
 		test.InitializeEvent{
 			TargetValue: 3,
-		}
+		},
+	}
 	err := store.CommitEvents(&testStoreWriter{
 		key:              "dummy-key",
 		eventRegistry:    test.GetTestRegistry(),
@@ -95,11 +95,11 @@ func TestMemoryStoreAppendNonExisting(t *testing.T) {
 // the end for an aggregate that does exist.
 func TestMemoryStoreAppendPastEnd(t *testing.T) {
 	store := NewStore()
-	exampleEvents := make([]interface{}, 1)
-	exampleEvents[0] =
+	exampleEvents := []eventsourcing.Event{
 		test.InitializeEvent{
 			TargetValue: 3,
-		}
+		},
+	}
 	err := store.CommitEvents(&testStoreWriter{
 		key:              "dummy-key",
 		eventRegistry:    test.GetTestRegistry(),
@@ -121,9 +121,9 @@ func TestMemoryStoreAppendPastEnd(t *testing.T) {
 func TestMemoryStoreErrorOnUnmapped(t *testing.T) {
 	registry := eventsourcing.NewStandardEventRegistry()
 	store := NewStore()
-	exampleEvents := make([]interface{}, 1)
-	exampleEvents[0] =
-		test.UnknownEventTypeExample{}
+	exampleEvents := []eventsourcing.Event{
+		test.UnknownEventTypeExample{},
+	}
 	err := store.CommitEvents(&testStoreWriter{
 		key:              "dummy-key",
 		eventRegistry:    registry,

@@ -35,15 +35,15 @@ type item struct {
 
 // loadEvents loads events for the specified aggregate that are beyond the
 // specified baseSequence number.
-func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry, baseSequence int64) ([]interface{}, error) {
+func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry, baseSequence int64) ([]eventsourcing.Event, error) {
 	// No stream, empty list.
 	stream, hasStream := store.streams[key]
 	if !hasStream {
-		return make([]interface{}, 0), nil
+		return make([]eventsourcing.Event, 0), nil
 	}
 
 	// Create our events set
-	result := make([]interface{}, len(stream))
+	result := make([]eventsourcing.Event, len(stream))
 
 	// Iterate events
 	for index, item := range stream {
