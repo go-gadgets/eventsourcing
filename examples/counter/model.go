@@ -14,7 +14,7 @@ func init() {
 // CounterAggregate counts the number of times it's been incremented.
 type CounterAggregate struct {
 	eventsourcing.AggregateBase `json:"-" bson:"-"`
-	Count                     int `json:"count" bson:"count"`
+	Count                       int `json:"count" bson:"count"`
 }
 
 // IncrementEvent is an event that moves the counter up.
