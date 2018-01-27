@@ -54,23 +54,3 @@ type StoreWriterAdapter interface {
 	// sequence/position, which may be required when snapshotting.
 	GetState() interface{}
 }
-
-// SnapReaderAdapter represents an adapter that can be used to read snapshots
-// from a storage provider.
-type SnapReaderAdapter interface {
-	Adapter
-
-	// SetState apply the state state form the reader over the top of the
-	// focused instance and set the current sequence number accordingly.
-	SetState(state interface{}, snapSequence int64)
-}
-
-// SnapWriterAdapter isan adapter interface that defines the inputs and operations
-// expected by a snapshot provider in order to store snapshots.
-type SnapWriterAdapter interface {
-	AdapterPositional
-
-	// GetState returns the state of the aggregate for persistence.
-	// The structure returned should be directly marshalled to JSON.
-	ReadState() interface{}
-}
