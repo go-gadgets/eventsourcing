@@ -1,4 +1,7 @@
 language: go
+services:
+  - docker
+  
 go: 
  - 1.9
  - 1.8
@@ -6,6 +9,7 @@ go:
  - tip
 
 script:
+ - docker run -d -p 27017:27017 mongo
  - go test -v -cover . -coverprofile=coverage-core.out
  - go test -v -cover ./stores/in-memory -coverprofile=coverage-memory.out
  - go test -v -cover ./stores/mongo -coverprofile=coverage-mongo.out
@@ -20,3 +24,5 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+  

@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
@@ -50,8 +51,13 @@ func (instance *MongoStoreWriter) SequenceNumber() int64 {
 func CreateTestMongoStore() (eventsourcing.EventStore, func(), error) {
 	collectionName := fmt.Sprintf("%s", uuid.NewV4())
 
+	dial := os.Getenv("MONGO_TEST_HOST")
+	if dial == "" {
+		dial = "mongodb://localhost:27017"
+	}
+
 	result, err := NewMongoStore(StoreParameters{
-		DialURL:        "mongodb://mongodb-test:27017",
+		DialURL:        dial,
 		DatabaseName:   "TestDatabase",
 		CollectionName: collectionName,
 	})
