@@ -28,12 +28,19 @@ type Aggregate interface {
 type Command interface {
 }
 
+// CommandHandleFunc is a function that handles a command directly.
+type CommandHandleFunc func(command Command) ([]Event, error)
+
 // CommandHandler is an interface that describes the operations available on
 // an instance that can follow the command-handler pattern.
 type CommandHandler interface {
 	// Handle a command, returning the resultant events (or an error)
 	Handle(command Command) ([]Event, error)
 }
+
+// CommandType is a string-alias that represents a commands type, which
+// can be used in maps.
+type CommandType string
 
 // Event is an interface that describes common attributes of events.
 type Event interface {

@@ -17,6 +17,10 @@ type CounterAggregate struct {
 	Count                       int `json:"count" bson:"count"`
 }
 
+// IncrementCommand is a command to increment an aggregates value
+type IncrementCommand struct {
+}
+
 // IncrementEvent is an event that moves the counter up.
 type IncrementEvent struct {
 }
@@ -25,6 +29,19 @@ type IncrementEvent struct {
 func (agg *CounterAggregate) Initialize(key string, store eventsourcing.EventStore, state eventsourcing.StateFetchFunc) {
 	agg.AggregateBase.Initialize(key, registry, store, state)
 	agg.AutomaticWireup(agg)
+}
+
+// HandleIncrementCommand handles an increment command from the bus.
+func (agg *CounterAggregate) HandleIncrementCommand(command IncrementCommand) ([]eventsourcing.Event, error) {
+	// Limit is 30, then we explode.
+	if agg.Count <= 30 {
+		return nil, eventsourcing.NewDomainFault(agg.GetKey(), "limit_reached")
+	}
+
+	// Raise the events
+	return []eventsourcing.Event{
+		IncrementEvent{},
+	}, nil
 }
 
 // Increment increases the counter value.

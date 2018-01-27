@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -8,6 +9,9 @@ import (
 )
 
 const (
+	// HandleMethodPrefix is a prefix used for command handler methods
+	HandleMethodPrefix = "Handle"
+
 	// ReplayMethodPrefix is the prefix used for event replay methods
 	ReplayMethodPrefix = "Replay"
 )
@@ -26,6 +30,10 @@ type AggregateBase struct {
 	// of the aggregate (i.e. the number of events that have)
 	// been applied in it's lifetime.
 	sequenceNumber int64
+
+	// commandHandlers is the set of command-handler functons known for this
+	// instance.
+	commandHandlers map[CommandType]CommandHandleFunc
 
 	// eventReplay is a map of event replay functions
 	eventReplay map[EventType]func(Event)
@@ -56,9 +64,38 @@ func (agg *AggregateBase) Initialize(key string, registry EventRegistry, store E
 	agg.committedSequenceNumber = 0
 	agg.eventRegistry = registry
 	agg.eventReplay = make(map[EventType]func(Event))
+	agg.commandHandlers = make(map[CommandType]CommandHandleFunc)
 	agg.eventStore = store
 	agg.uncomittedEvents = make([]Event, 0)
 	agg.stateFunc = state
+}
+
+// Handle processes a command against the aggregate.
+func (agg *AggregateBase) Handle(command Command) error {
+	return agg.Run(func() error {
+		return agg.handleInternal(command)
+	})
+}
+
+// handleInternal determines the replay method to use, and then dispatches it.
+func (agg *AggregateBase) handleInternal(command Command) error {
+	commandType := CommandType(reflect.TypeOf(command).String())
+
+	handler, found := agg.commandHandlers[commandType]
+	if !found {
+		return fmt.Errorf("Unsupported command type: %v", commandType)
+	}
+
+	events, errResult := handler(command)
+	if errResult != nil {
+		return errResult
+	}
+
+	for _, evt := range events {
+		agg.ApplyEvent(evt)
+	}
+
+	return nil
 }
 
 // Run performs a load, mutate, commit cycle on an aggregate
@@ -87,6 +124,7 @@ func (agg *AggregateBase) Run(callback func() error) error {
 // AutomaticWireup performs automatic detection of event replay methods, looking
 // for applyEventName methods on the current type.
 func (agg *AggregateBase) AutomaticWireup(subject interface{}) {
+	agg.commandHandlers = buildHandleMappings(subject)
 	agg.eventReplay = buildReplayMappings(subject)
 }
 
@@ -139,8 +177,8 @@ func (agg *AggregateBase) Refresh() error {
 	return agg.eventStore.Refresh(adapter)
 }
 
-// getKey fetches the key of this aggregate instance.
-func (agg *AggregateBase) getKey() string {
+// GetKey fetches the key of this aggregate instance.
+func (agg *AggregateBase) GetKey() string {
 	return agg.key
 }
 
@@ -177,6 +215,58 @@ func (agg *AggregateBase) getEventRegistry() EventRegistry {
 // isDirty returns true if the aggregate has uncommitted events, false otherwise.
 func (agg *AggregateBase) isDirty() bool {
 	return len(agg.uncomittedEvents) > 0
+}
+
+// buildHandleMappings builds a set of command handler mappings for a type that has
+// methods of a suitable interface. This allows wireup-by-convention for the base
+// aggregate type.
+func buildHandleMappings(subject interface{}) map[CommandType]CommandHandleFunc {
+	commandHandlers := make(map[CommandType]CommandHandleFunc)
+	subjectType := reflect.TypeOf(subject)
+	totalMethods := subjectType.NumMethod()
+	for methodIndex := 0; methodIndex < totalMethods; methodIndex++ {
+		candidate := subjectType.Method(methodIndex)
+
+		// Skip methods without prefix
+		if !strings.HasPrefix(candidate.Name, HandleMethodPrefix) {
+			continue
+		}
+
+		// Method should have one argument (+ an instance argument), two outputs
+		if candidate.Type.NumIn() != 2 || candidate.Type.NumOut() != 2 {
+			continue
+		}
+
+		handler := func(command Command) ([]Event, error) {
+			result := candidate.Func.Call([]reflect.Value{
+				reflect.ValueOf(subject),
+				reflect.ValueOf(command),
+			})
+
+			if len(result) != 2 {
+				return nil, fmt.Errorf("Too many return arguments, expected 2, got %v", len(result))
+			}
+
+			var events []Event
+			if !result[0].IsNil() {
+				events = result[0].Interface().([]Event)
+			}
+
+			var err error
+			if !result[1].IsNil() {
+				err = result[1].Interface().(error)
+			}
+
+			return events, err
+		}
+
+		// The event type is the second parameter in an instance
+		// method, since the first parameter is the instance
+		commandType := candidate.Type.In(1)
+		commandTypeName := CommandType(commandType.String())
+		commandHandlers[commandTypeName] = handler
+	}
+	return commandHandlers
 }
 
 // buildReplayMappings builds a set of event replay mappings for a type that has
@@ -224,7 +314,7 @@ type aggregateBaseLoaderAdapter struct {
 
 // GetKey fetches the aggregate key
 func (adapter *aggregateBaseLoaderAdapter) GetKey() string {
-	return adapter.aggregate.getKey()
+	return adapter.aggregate.GetKey()
 }
 
 // GetEventRegistry gets the event registry for this aggregate
@@ -267,7 +357,7 @@ type aggregateBaseStoreAdapter struct {
 
 // GetKey gets the key of the aggregate
 func (adapter *aggregateBaseStoreAdapter) GetKey() string {
-	return adapter.aggregate.getKey()
+	return adapter.aggregate.GetKey()
 }
 
 // SequenceNumber fetches the current sequence numer of the aggregate.

@@ -39,17 +39,13 @@ func main() {
 		errRun := eventsourcing.Retry(100, func() error {
 			agg := CounterAggregate{}
 			agg.Initialize(name, store, func() interface{} { return &agg })
+
 			errRun := agg.Run(func() error {
-				agg.Increment()
+				count = agg.Count
 				return nil
 			})
-			if errRun != nil {
-				return errRun
-			}
 
-			count = agg.Count
-
-			return nil
+			return errRun
 		})
 
 		if errRun != nil {
@@ -62,5 +58,25 @@ func main() {
 			"count": count,
 		})
 	})
+
+	r.POST("/:name/increment", func(c *gin.Context) {
+		name := c.Param("name")
+		agg := CounterAggregate{}
+		agg.Initialize(name, store, func() interface{} { return &agg })
+
+		errCommand := agg.Handle(IncrementCommand{})
+
+		if errCommand != nil {
+			c.JSON(500, errCommand.Error())
+			return
+		}
+
+		// Show the count
+		c.JSON(200, gin.H{
+			"count": agg.Count,
+		})
+
+	})
+
 	r.Run() // listen and serve on 0.0.0.0:8080
 }

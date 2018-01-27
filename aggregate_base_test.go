@@ -2,7 +2,6 @@ package eventsourcing
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,14 +27,12 @@ func TestBaseAggregateEventApplication(t *testing.T) {
 }
 
 // TestBaseAggregateRun checks we can use the run method.
-func TestBaseAggregateRun(t *testing.T) {
+func TestBaseAggregateHandle(t *testing.T) {
 	instance := &SimpleAggregate{}
 	store := NewNullStore()
 	instance.Initialize("dummy-key", counterRegistry, store)
-	errRun := instance.Run(func() error {
-		fmt.Println("Running")
-		instance.Init(3)
-		return nil
+	errRun := instance.Handle(InitializeCommand{
+		TargetValue: 3,
 	})
 
 	assert.Nil(t, errRun, "Run error should be nil")

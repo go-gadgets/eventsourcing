@@ -33,11 +33,22 @@ func (agg *SimpleAggregate) Initialize(key string, registry EventRegistry, store
 	agg.AggregateBase.AutomaticWireup(agg)
 }
 
-func (agg *SimpleAggregate) Init(target int) {
-	agg.ApplyEvent(InitializeEvent{
-		TargetValue: target,
-	})
-	return
+// HandleInitializeCommand handles the initialization of the counter.
+func (agg *SimpleAggregate) HandleInitializeCommand(command InitializeCommand) ([]Event, error) {
+	return []Event{
+		InitializeEvent{
+			TargetValue: command.TargetValue,
+		},
+	}, nil
+}
+
+// HandleIncrementCommand handles incrementing a counter.
+func (agg *SimpleAggregate) HandleIncrementCommand(command IncrementCommand) ([]Event, error) {
+	return []Event{
+		IncrementCommand{
+			IncrementBy: command.IncrementBy,
+		},
+	}, nil
 }
 
 // ReplayInitializeEvent applies an InitializeEvent to the model.
@@ -61,6 +72,17 @@ func (agg *SimpleAggregate) ReplayEventWithInvalidReturnMapping(event EventWithI
 // an increment event.
 func (agg *SimpleAggregate) ReplayEventWithTooManyArgumentsMapping(event EventWithInvalidReturnMapping, extraParameter int) {
 	agg.CurrentCount += event.IncrementBy
+}
+
+// InitializeCommand is a command to initialize the aggregate
+type InitializeCommand struct {
+	// TargetValue is the value the counter will count towards.
+	TargetValue int `json:"target_value"`
+}
+
+// IncrementCommand is a command to increment the total.
+type IncrementCommand struct {
+	IncrementBy int `json:"increment_by"`
 }
 
 // InitializeEvent is an event that initializes the current state
