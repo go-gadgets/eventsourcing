@@ -2,6 +2,8 @@
 *
 !*.*
 !*/
+!Dockerfile
+!Makefile
 .vscode
 .DS_Store
 thumbs.db
