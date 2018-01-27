@@ -6,8 +6,8 @@ import (
 
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/go-gadgets/eventsourcing"
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -22,10 +22,10 @@ type mongoDBEventStore struct {
 
 // mongoDBEvent is the event record type we store into the collection
 type mongoDBEvent struct {
-	Key       string                `json:"key"`
-	Sequence  int64                 `json:"sequence"`
+	Key       string                  `json:"key"`
+	Sequence  int64                   `json:"sequence"`
 	EventType eventsourcing.EventType `json:"event_type" bson:"event_type"`
-	EventData interface{}           `json:"event_data" bson:"event_data"`
+	EventData interface{}             `json:"event_data" bson:"event_data"`
 }
 
 // StoreParameters are parameters for the MongoDB event store
