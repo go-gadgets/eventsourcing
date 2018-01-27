@@ -110,7 +110,7 @@ import (
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	store := inmemory.NewInMemoryStore()
+	store := inmemory.NewStore()
 
 	r := gin.Default()
 	r.GET("/:name/increment", func(c *gin.Context) {

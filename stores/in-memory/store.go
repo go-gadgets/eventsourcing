@@ -8,8 +8,8 @@ import (
 	"github.com/go-gadgets/eventsourcing"
 )
 
-// NewInMemoryStore creates a new in memory event store.
-func NewInMemoryStore() eventsourcing.EventStore {
+// NewStore creates a new in memory event store.
+func NewStore() eventsourcing.EventStore {
 	return &store{
 		streams: make(map[string][]item),
 	}

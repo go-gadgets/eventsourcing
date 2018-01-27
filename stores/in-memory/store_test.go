@@ -49,7 +49,7 @@ func (instance *testStoreWriter) GetState() interface{} {
 // expected from the specified event-store.
 func TestMemoryStoreCommitReload(t *testing.T) {
 	instance := &test.SimpleAggregate{}
-	store := NewInMemoryStore()
+	store := NewStore()
 
 	// 1: Get event
 	instance.Initialize("dummy-key", test.GetTestRegistry(), store)
@@ -76,7 +76,7 @@ func TestMemoryStoreCommitReload(t *testing.T) {
 // TestMemoryStoreAppendNonExisting checks that you can't append events past
 // sequence 0 for an aggregate that does not exist.
 func TestMemoryStoreAppendNonExisting(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewStore()
 	exampleEvents := make([]interface{}, 1)
 	exampleEvents[0] =
 		test.InitializeEvent{
@@ -94,7 +94,7 @@ func TestMemoryStoreAppendNonExisting(t *testing.T) {
 // TestMemoryStoreAppendPastEnd checks that you can't append events past
 // the end for an aggregate that does exist.
 func TestMemoryStoreAppendPastEnd(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewStore()
 	exampleEvents := make([]interface{}, 1)
 	exampleEvents[0] =
 		test.InitializeEvent{
@@ -120,7 +120,7 @@ func TestMemoryStoreAppendPastEnd(t *testing.T) {
 // put events in the queue that are not mapped.
 func TestMemoryStoreErrorOnUnmapped(t *testing.T) {
 	registry := eventsourcing.NewStandardEventRegistry()
-	store := NewInMemoryStore()
+	store := NewStore()
 	exampleEvents := make([]interface{}, 1)
 	exampleEvents[0] =
 		test.UnknownEventTypeExample{}
@@ -135,7 +135,7 @@ func TestMemoryStoreErrorOnUnmapped(t *testing.T) {
 
 // TestMemoryStoreConcurrency checks that you can't store two events at the same offset.
 func TestMemoryStoreConcurrency(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewStore()
 
 	firstInstance := &test.SimpleAggregate{}
 	firstInstance.Initialize("dummy-key", test.GetTestRegistry(), store)
@@ -163,7 +163,7 @@ func TestMemoryStoreConcurrency(t *testing.T) {
 // BenchmarkMemoryStoreIndividualCommit tests how fast we can apply events to an aggregate
 func BenchmarkMemoryStoreIndividualCommit(b *testing.B) {
 	instance := &test.SimpleAggregate{}
-	store := NewInMemoryStore()
+	store := NewStore()
 	instance.Initialize("dummy-key", test.GetTestRegistry(), store)
 
 	for i := 0; i < b.N; i++ {
@@ -178,7 +178,7 @@ func BenchmarkMemoryStoreIndividualCommit(b *testing.B) {
 func BenchmarkMemoryStoreBulkCommit(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Create the aggregate
-		store := NewInMemoryStore()
+		store := NewStore()
 		instance := &test.SimpleAggregate{}
 		instance.Initialize("dummy-key", test.GetTestRegistry(), store)
 		instance.Refresh()
