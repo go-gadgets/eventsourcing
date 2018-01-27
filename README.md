@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/go-gadgets/eventsourcing.svg?branch=master)](https://travis-ci.org/go-gadgets/eventsourcing)
 [![GoDoc](https://godoc.org/github.com/go-gadgets/eventsourcing?status.svg)](https://godoc.org/github.com/go-gadgets/eventsourcing)
-[![Go Report Card](https://goreportcard.com/badge/github.com/go-gadgets/eventsourcing)](https://goreportcard.com/report/github.com/go-gadgets/eventsourcing)
+[![codecov](https://codecov.io/gh/go-gadgets/eventsourcing/branch/master/graph/badge.svg)](https://codecov.io/gh/go-gadgets/eventsourcing)[![Go Report Card](https://goreportcard.com/badge/github.com/go-gadgets/eventsourcing)](https://goreportcard.com/report/github.com/go-gadgets/eventsourcing)
 
 An opinionated event-sourcing framework, written in Go.
 
