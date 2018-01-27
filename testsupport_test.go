@@ -33,6 +33,9 @@ func (agg *SimpleAggregate) Initialize(key string, registry EventRegistry, store
 	agg.AggregateBase.AutomaticWireup(agg)
 }
 
+func (agg *SimpleAggregate) Init(target int) {
+	return 
+}
 // ReplayInitializeEvent applies an InitializeEvent to the model.
 func (agg *SimpleAggregate) ReplayInitializeEvent(event InitializeEvent) {
 	agg.TargetValue = event.TargetValue

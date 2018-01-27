@@ -3,7 +3,6 @@ package eventsourcing
 import (
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -12,15 +11,6 @@ const (
 	// ReplayMethodPrefix is the prefix used for event replay methods
 	ReplayMethodPrefix = "Replay"
 )
-
-var baseQueues map[string]int
-var baseMutexes map[string]*sync.Mutex
-var baseMutex sync.Mutex
-
-func init() {
-	baseQueues = make(map[string]int)
-	baseMutexes = make(map[string]*sync.Mutex)
-}
 
 // AggregateBase is an implementation of Aggregate that provides a lot of shared
 // boilerplate code.
@@ -73,44 +63,6 @@ func (agg *AggregateBase) Initialize(key string, registry EventRegistry, store E
 
 // Run performs a load, mutate, commit cycle on an aggregate
 func (agg *AggregateBase) Run(callback func() error) error {
-	// If this aggregate is already being worked on by another Run(), then
-	// serialize the call. This avoids some concurrency problems when running
-	// heavily loaded single aggregates.
-	baseMutex.Lock()
-	count, found := baseQueues[agg.key]
-	if !found {
-		count = 1
-		baseQueues[agg.key] = count
-		baseMutexes[agg.key] = &sync.Mutex{}
-	} else {
-		baseQueues[agg.key] = count + 1
-	}
-	mutex := baseMutexes[agg.key]
-	baseMutex.Unlock()
-
-	// Lock the mutex.
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	defer func() {
-		baseMutex.Lock()
-		count, found := baseQueues[agg.key]
-		if !found {
-			// Should never happen.
-			panic("AggregateBase locking failure.")
-		}
-
-		if count > 1 {
-			baseQueues[agg.key] = count - 1
-		} else {
-			// This prevents lots of distinct keys eating RAM.
-			delete(baseQueues, agg.key)
-			delete(baseMutexes, agg.key)
-		}
-
-		baseMutex.Unlock()
-	}()
-
 	// Load the current state of the aggregate
 	errLoad := agg.Refresh()
 	if errLoad != nil {
