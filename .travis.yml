@@ -8,17 +8,10 @@ go:
 
 script:
  - docker run -d -p 27017:27017 mongo
- - go test -v -cover . -coverprofile=coverage-core.out
- - go test -v -cover ./stores/in-memory -coverprofile=coverage-memory.out
- - go test -v -cover ./stores/mongo -coverprofile=coverage-mongo.out
+ - echo 'mode: atomic' > coverage.txt && go list ./... | xargs -n1 -I{} sh -c 'go test -covermode=atomic -coverprofile=coverage.tmp {} && tail -n +2 coverage.tmp >> coverage.txt' && rm coverage.tmp
  - go test -bench=.
  - go test -bench=./stores/in-memory
  - go test -bench=./stores/mongo
- - echo "" > coverage.txt
- - cat coverage-core.out >> coverage.txt
- - cat coverage-memory.out >> coverage.txt
- - cat coverage-mongo.out >> coverage.txt
- - rm -f *.out
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
