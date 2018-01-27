@@ -1,0 +1,9 @@
+# Ignore files without extensions
+*
+!*.*
+!*/
+.vscode
+.DS_Store
+thumbs.db
+*.log
+*.out
