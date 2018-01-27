@@ -104,29 +104,33 @@ func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) er
 func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
 	key := adapter.GetKey()
 
-	// If the aggregate is dirty, prevent refresh from occurring.
-	if adapter.IsDirty() {
-		return fmt.Errorf("StoreError: Aggregate %v is modified", key)
-	}
+	// Only run the the snapshot fetch if an outer-driver has not already refreshed
+	// the aggregate state. This allows for composition of snap-drivers.
+	if adapter.SequenceNumber() == 0 {
+		// If the aggregate is dirty, prevent refresh from occurring.
+		if adapter.IsDirty() {
+			return fmt.Errorf("StoreError: Aggregate %v is modified", key)
+		}
 
-	// Load the events from mgo
-	var loaded snapshot
-	errLoad := store.collection.Find(
-		bson.M{
-			"_id": key,
-		},
-	).
-		Sort("-sequence").
-		One(&loaded)
-	if errLoad != nil && errLoad != mgo.ErrNotFound {
-		return errLoad
-	}
+		// Load the events from mgo
+		var loaded snapshot
+		errLoad := store.collection.Find(
+			bson.M{
+				"_id": key,
+			},
+		).
+			Sort("-sequence").
+			One(&loaded)
+		if errLoad != nil && errLoad != mgo.ErrNotFound {
+			return errLoad
+		}
 
-	// Restore the snapshotted state
-	if loaded.Sequence > 0 {
-		errSnap := adapter.RestoreSnapshot(loaded.Sequence, loaded.State)
-		if errSnap != nil {
-			return nil
+		// Restore the snapshotted state
+		if loaded.Sequence > 0 {
+			errSnap := adapter.RestoreSnapshot(loaded.Sequence, loaded.State)
+			if errSnap != nil {
+				return nil
+			}
 		}
 	}
 
