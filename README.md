@@ -17,7 +17,7 @@ To install this package, please use [gopkg.in](https://gopkg.in/go-gadgets/event
 The features of this framework are:
 
  - Low-ceremony:
-   - The counter-example is less than 100 lines of code, including snapshot support, Mongo persistence and a web-server API.
+   - The counter-example is less than 150 lines of code, including snapshot support, Mongo persistence and a web-server API.
  - Pluggable event-store engines:
    - MongoDB
    - InMemory
@@ -73,14 +73,15 @@ func (agg *CounterAggregate) Initialize(key string, store eventsourcing.EventSto
 	agg.AutomaticWireup(agg)
 }
 
-// Increment increases the counter value.
-func (agg *CounterAggregate) Increment() {
-	// Do any domain logic here.
+// HandleIncrementCommand handles an increment command from the bus.
+func (agg *CounterAggregate) HandleIncrementCommand(command IncrementCommand) ([]eventsourcing.Event, error) {
+  // Insert domain rules here.
 
-	// Apply the events
-	agg.ApplyEvent(IncrementEvent{})
+	// Raise the events
+	return []eventsourcing.Event{
+		IncrementEvent{},
+	}, nil
 }
-
 // ReplayIncrementEvent updates the counter by adding one.
 func (agg *CounterAggregate) ReplayIncrementEvent(event IncrementEvent) {
 	agg.Count++
@@ -96,7 +97,14 @@ In this example we have:
  - IncrementEvent
    - An event that when replayed, bumps the count up.
 
-Note the use of `AutomaticWireup(agg)`: this is a helper function that scans a type using reflection and configures event replays to use methods that match the `Replay<EventTypeName>(event <EventTypeName>)` method signature.
+Note the use of `AutomaticWireup(agg)`: this is a helper function that scans a type using reflection and configures:
+
+ - Replay Functions
+   - Used to recover the present state of an aggregate from the event stream.
+   - Use methods that match the `Replay<EventTypeName>(event <EventTypeName>)` method signature.
+ - Command Handlers
+   - Used to execute commands agains the model.
+   - Use methods that match the `Handle<CommandTypeName>(command <CommandTypeName>) ([]eventsourcing.Event, error)` method signature.
 
 To run this code, we can leverage a memory based store:
 
@@ -113,19 +121,15 @@ func main() {
 	store := inmemory.NewStore()
 
 	r := gin.Default()
-	r.GET("/:name/increment", func(c *gin.Context) {
+	r.POST("/:name/increment", func(c *gin.Context) {
 		name := c.Param("name")
-
 		agg := CounterAggregate{}
 		agg.Initialize(name, store, func() interface{} { return &agg })
 
-		errRun := agg.Run(func() error {
-			agg.Increment()
-			return nil
-		})
+		errCommand := agg.Handle(IncrementCommand{})
 
-		if errRun != nil {
-			c.JSON(500, errRun.Error())
+		if errCommand != nil {
+			c.JSON(500, errCommand.Error())
 			return
 		}
 
@@ -133,8 +137,10 @@ func main() {
 		c.JSON(200, gin.H{
 			"count": agg.Count,
 		})
+
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080
+  
+  r.Run() // Listen and serve on 0.0.0.0:8080
 }
 ```
 
