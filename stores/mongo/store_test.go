@@ -56,7 +56,7 @@ func CreateTestMongoStore() (eventsourcing.EventStore, func(), error) {
 		dial = "mongodb://localhost:27017"
 	}
 
-	result, err := NewMongoStore(StoreParameters{
+	result, err := NewStore(StoreParameters{
 		DialURL:        dial,
 		DatabaseName:   "TestDatabase",
 		CollectionName: collectionName,

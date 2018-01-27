@@ -10,7 +10,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Initialze the event store
-	store, errStore := mongo.NewMongoStore(mongo.StoreParameters{
+	store, errStore := mongo.NewStore(mongo.StoreParameters{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
 		CollectionName: "Counters",

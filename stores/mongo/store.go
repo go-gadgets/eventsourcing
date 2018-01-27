@@ -36,9 +36,9 @@ type StoreParameters struct {
 	CollectionName string `json:"collection_name"` // CollectionName is the collection name to put new documents in to
 }
 
-// NewMongoStore creates a new MongoDB backed event store for an
+// NewStore creates a new MongoDB backed event store for an
 // application to use.
-func NewMongoStore(params StoreParameters) (eventsourcing.EventStore, error) {
+func NewStore(params StoreParameters) (eventsourcing.EventStore, error) {
 	// Connect to the MongoDB services
 	session, errSession := mgo.Dial(params.DialURL)
 	if errSession != nil {
