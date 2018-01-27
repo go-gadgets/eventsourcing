@@ -35,3 +35,16 @@ func TestRetryBailout(t *testing.T) {
 	assert.NotNil(t, errOutcome, "The retry should return an error.")
 	assert.Equal(t, 10, count, "The count should be 10 at the end of the test.")
 }
+
+// TestNonRetryableBailout checks that we won't keep trying if it's not a concurrenc fault
+func TestNonRetryableBailout(t *testing.T) {
+	count := 0
+
+	errOutcome := Retry(10, func() error {
+		count++
+		return NewDomainFault("dummy-key", "bad-idea")
+	})
+
+	assert.NotNil(t, errOutcome, "The retry should return an error.")
+	assert.Equal(t, 1, count, "The count should be 1 at the end of the test.")
+}
