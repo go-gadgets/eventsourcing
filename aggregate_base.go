@@ -18,9 +18,9 @@ type AggregateBase struct {
 	// key is a Unique per-aggregate key
 	key string
 
-	// comittedSequenceNumber is the sequence number we have
-	// comitted up until.
-	comittedSequenceNumber int64
+	// committedSequenceNumber is the sequence number we have
+	// committed up until.
+	committedSequenceNumber int64
 
 	// sequenceNumber contains the current revision number
 	// of the aggregate (i.e. the number of events that have)
@@ -53,7 +53,7 @@ type AggregateBase struct {
 func (agg *AggregateBase) Initialize(key string, registry EventRegistry, store EventStore, state StateFetchFunc) {
 	agg.key = key
 	agg.sequenceNumber = 0
-	agg.comittedSequenceNumber = 0
+	agg.committedSequenceNumber = 0
 	agg.eventRegistry = registry
 	agg.eventReplay = make(map[EventType]func(interface{}))
 	agg.eventStore = store
@@ -164,7 +164,7 @@ func (agg *AggregateBase) Commit() error {
 
 	// Clear the uncomittedEvents array
 	agg.uncomittedEvents = make([]interface{}, 0)
-	agg.comittedSequenceNumber = agg.sequenceNumber
+	agg.committedSequenceNumber = agg.sequenceNumber
 	return nil
 }
 
@@ -245,7 +245,7 @@ func (adapter *aggregateBaseLoaderAdapter) IsDirty() bool {
 // ReplayEvent replays an event that has already been persisted
 func (adapter *aggregateBaseLoaderAdapter) ReplayEvent(event interface{}) {
 	adapter.aggregate.applyEventInternal(event)
-	adapter.aggregate.comittedSequenceNumber++
+	adapter.aggregate.committedSequenceNumber++
 }
 
 // RestoreSnapshot sets the current position and restores the snapshot
@@ -254,7 +254,7 @@ func (adapter *aggregateBaseLoaderAdapter) RestoreSnapshot(sequence int64, snaps
 	errDecode := mapstructure.Decode(snapshot, adapter.state)
 	if errDecode == nil {
 		adapter.aggregate.sequenceNumber = sequence
-		adapter.aggregate.comittedSequenceNumber = sequence
+		adapter.aggregate.committedSequenceNumber = sequence
 	}
 	return errDecode
 }
@@ -287,7 +287,7 @@ func (adapter *aggregateBaseStoreAdapter) GetEventRegistry() EventRegistry {
 
 // GetUncomittedEvents fetches the uncommitted events of this aggregate
 func (adapter *aggregateBaseStoreAdapter) GetUncomittedEvents() (int64, []interface{}) {
-	return adapter.aggregate.comittedSequenceNumber, adapter.aggregate.uncomittedEvents
+	return adapter.aggregate.committedSequenceNumber, adapter.aggregate.uncomittedEvents
 }
 
 // GetState returns the aggregate state for serialization.

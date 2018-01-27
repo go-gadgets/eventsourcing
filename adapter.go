@@ -41,11 +41,11 @@ type StoreLoaderAdapter interface {
 }
 
 // StoreWriterAdapter is an adapter interface that defines the inputs an aggregate
-// gives to a store for writing/comitting new events.
+// gives to a store for writing/committing new events.
 type StoreWriterAdapter interface {
 	AdapterWithEvents
 
-	// GetUncomittedEvent gets the comitted sequence number, and any
+	// GetUncomittedEvent gets the committed sequence number, and any
 	// events that have been added since hte last commit. This can been
 	// used by a backing store to write data.
 	GetUncomittedEvents() (int64, []interface{})

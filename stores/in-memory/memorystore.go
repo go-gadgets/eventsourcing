@@ -62,7 +62,7 @@ func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry,
 			return nil, errUnmarshal
 		}
 
-		// This reflection evil is needed becuase we are now trying
+		// This reflection evil is needed because we are now trying
 		// to turn the event structure pointer back into a raw instance
 		// of the structure, so as to maintain immutability/pass-by-value.
 		slice := reflect.ValueOf(result)

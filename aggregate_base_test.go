@@ -57,7 +57,7 @@ func TestBaseAggregateEventCommit(t *testing.T) {
 	assert.True(t, instance.isDirty(), "The aggregate should be dirty, after applying an event")
 
 	instance.Commit()
-	assert.False(t, instance.isDirty(), "The aggregate should not be dirty after comitting events.")
+	assert.False(t, instance.isDirty(), "The aggregate should not be dirty after committing events.")
 }
 
 // TestBaseAggregateIgnoreUnmappedEvents checks that undefined events are handled by no-op and only
