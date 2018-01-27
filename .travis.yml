@@ -8,7 +8,7 @@ go:
 
 script:
  - docker run -d -p 27017:27017 mongo
- - sh -c 'echo "mode: atomic" > coverage.txt'
+ - "echo 'mode: atomic' > coverage.txt"
  - go list ./... | xargs -n1 -I{} sh -c 'go test  -v -covermode=atomic -coverprofile=coverage.tmp {} && tail -n +2 coverage.tmp >> coverage.txt' 
  - rm coverage.tmp
  - go test -v -bench=.
