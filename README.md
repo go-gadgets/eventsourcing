@@ -4,8 +4,16 @@
 [![GoDoc](https://godoc.org/github.com/go-gadgets/eventsourcing?status.svg)](https://godoc.org/github.com/go-gadgets/eventsourcing)
 [![codecov](https://codecov.io/gh/go-gadgets/eventsourcing/branch/master/graph/badge.svg)](https://codecov.io/gh/go-gadgets/eventsourcing)[![Go Report Card](https://goreportcard.com/badge/github.com/go-gadgets/eventsourcing)](https://goreportcard.com/report/github.com/go-gadgets/eventsourcing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![stability-experimental](https://img.shields.io/badge/stability-experimental-orange.svg)](https://github.com/emersion/stability-badges#experimental)
 
-An opinionated event-sourcing framework, written in Go.
+An opinionated event-sourcing framework, written in Go. Currently 
+
+## Installation
+To install this package, please use [gopkg.in](https://gopkg.in/go-gadgets/eventsourcing.v0) instead of Github:
+
+```
+  go get gopkg.in/go-gadgets/eventsourcing.v0
+```
 
 ## Features
 The features of this framework are:
