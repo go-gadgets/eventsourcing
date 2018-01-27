@@ -37,7 +37,7 @@ func (instance *MongoStoreWriter) GetUncomittedEvents() (int64, []interface{}) {
 	return instance.uncomittedOrigin, instance.uncomittedEvents
 }
 
-// IsDirty is true if there are uncomitted events
+// IsDirty is true if there are uncommitted events
 func (instance *MongoStoreWriter) IsDirty() bool {
 	return len(instance.uncomittedEvents) > 0
 }

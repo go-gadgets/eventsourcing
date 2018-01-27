@@ -68,7 +68,7 @@ func NewSnapStore(params SnapParameters, wrapped eventsourcing.EventStore) (even
 	}, nil
 }
 
-// CommitEvents stores any events for the specified aggregate that are uncomitted
+// CommitEvents stores any events for the specified aggregate that are uncommitted
 // at this point in time.
 func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
 	// Store the inner provider first.
@@ -104,7 +104,7 @@ func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) er
 func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
 	key := adapter.GetKey()
 
-	// If the aggregate is dirty, prevent refresh from occuring.
+	// If the aggregate is dirty, prevent refresh from occurring.
 	if adapter.IsDirty() {
 		return fmt.Errorf("StoreError: Aggregate %v is modified", key)
 	}

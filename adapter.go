@@ -24,7 +24,7 @@ type AdapterWithEvents interface {
 	// GetEventRegistry gets the event registry to use
 	GetEventRegistry() EventRegistry
 
-	// IsDirty returns true if the aggregate has uncomitted state.
+	// IsDirty returns true if the aggregate has uncommitted state.
 	IsDirty() bool
 }
 

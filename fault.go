@@ -2,7 +2,7 @@ package eventsourcing
 
 import "fmt"
 
-// ConcurrencyFault represents an error that occured when updating an aggregate:
+// ConcurrencyFault represents an error that occurred when updating an aggregate:
 // specifically that we have tried to insert events at an index that is already
 // defined. This means the client likely needs to re-run the command to break
 // the deadlock, as someone else executed first.

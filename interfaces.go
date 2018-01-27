@@ -7,7 +7,7 @@ type Aggregate interface {
 	// Initialize sets up the initial state of the aggregate.
 	Initialize(key string, registry EventRegistry, store EventStore)
 
-	// ApplyEvent applies an event that has occured to the aggregate
+	// ApplyEvent applies an event that has occurred to the aggregate
 	// instance to mutate its state. Events that are not recognized are
 	// ignored, and all event application is fail-safe.
 	ApplyEvent(interface{})
@@ -62,7 +62,7 @@ type EventRegistry interface {
 // EventStore defines the behaviours of a store that can load/save event streams
 // for an aggregate.
 type EventStore interface {
-	// CommitEvents stores any events for the specified aggregate that are uncomitted
+	// CommitEvents stores any events for the specified aggregate that are uncommitted
 	// at this point in time.
 	CommitEvents(writer StoreWriterAdapter) error
 

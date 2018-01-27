@@ -65,7 +65,7 @@ func NewMongoStore(params StoreParameters) (eventsourcing.EventStore, error) {
 	}, nil
 }
 
-// CommitEvents stores any events for the specified aggregate that are uncomitted
+// CommitEvents stores any events for the specified aggregate that are uncommitted
 // at this point in time.
 func (store *mongoDBEventStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
 	key := writer.GetKey()
@@ -126,7 +126,7 @@ func (store *mongoDBEventStore) Refresh(adapter eventsourcing.StoreLoaderAdapter
 	reg := adapter.GetEventRegistry()
 	seq := adapter.SequenceNumber()
 
-	// If the aggregate is dirty, prevent refresh from occuring.
+	// If the aggregate is dirty, prevent refresh from occurring.
 	if adapter.IsDirty() {
 		return fmt.Errorf("StoreError: Aggregate %v is modified", key)
 	}

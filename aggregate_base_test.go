@@ -2,6 +2,7 @@ package eventsourcing
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,11 +32,13 @@ func TestBaseAggregateRun(t *testing.T) {
 	instance := &SimpleAggregate{}
 	store := NewNullStore()
 	instance.Initialize("dummy-key", counterRegistry, store)
-	instance.Run(func() error {
+	errRun := instance.Run(func() error {
+		fmt.Println("Running")
 		instance.Init(3)
 		return nil
 	})
 
+	assert.Nil(t, errRun, "Run error should be nil")
 	assert.Equal(t, int64(1), instance.SequenceNumber(), "The aggregate sequence number should be 1")
 	assert.Equal(t, 3, instance.TargetValue, "The aggregate target value should be 3")
 }

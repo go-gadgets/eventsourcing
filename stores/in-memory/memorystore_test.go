@@ -30,7 +30,7 @@ func (instance *testStoreWriter) GetUncomittedEvents() (int64, []interface{}) {
 	return instance.uncomittedOrigin, instance.uncomittedEvents
 }
 
-// IsDirty is reture if there's an uncomitted event
+// IsDirty is reture if there's an uncommitted event
 func (instance *testStoreWriter) IsDirty() bool {
 	return len(instance.uncomittedEvents) > 0
 }

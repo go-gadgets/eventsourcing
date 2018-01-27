@@ -90,7 +90,7 @@ func (agg *AggregateBase) AutomaticWireup(subject interface{}) {
 	agg.eventReplay = buildReplayMappings(subject)
 }
 
-// ApplyEvent applies an event that has occured to the aggregate base
+// ApplyEvent applies an event that has occurred to the aggregate base
 // instance to mutate its state. Events that are not recognized are
 // ignored, and all event application should be fail-safe.
 func (agg *AggregateBase) ApplyEvent(event interface{}) {
@@ -174,7 +174,7 @@ func (agg *AggregateBase) getEventRegistry() EventRegistry {
 	return agg.eventRegistry
 }
 
-// isDirty returns true if the aggregate has uncomitted events, false otherwise.
+// isDirty returns true if the aggregate has uncommitted events, false otherwise.
 func (agg *AggregateBase) isDirty() bool {
 	return len(agg.uncomittedEvents) > 0
 }
@@ -237,7 +237,7 @@ func (adapter *aggregateBaseLoaderAdapter) SequenceNumber() int64 {
 	return adapter.aggregate.SequenceNumber()
 }
 
-// IsDirty returns true if the aggregate is dirty/has uncomitted events
+// IsDirty returns true if the aggregate is dirty/has uncommitted events
 func (adapter *aggregateBaseLoaderAdapter) IsDirty() bool {
 	return adapter.aggregate.isDirty()
 }
@@ -285,7 +285,7 @@ func (adapter *aggregateBaseStoreAdapter) GetEventRegistry() EventRegistry {
 	return adapter.aggregate.getEventRegistry()
 }
 
-// GetUncomittedEvents fetches the uncomitted events of this aggregate
+// GetUncomittedEvents fetches the uncommitted events of this aggregate
 func (adapter *aggregateBaseStoreAdapter) GetUncomittedEvents() (int64, []interface{}) {
 	return adapter.aggregate.comittedSequenceNumber, adapter.aggregate.uncomittedEvents
 }

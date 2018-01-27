@@ -77,10 +77,10 @@ func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry,
 func (store *store) CommitEvents(adapter eventsourcing.StoreWriterAdapter) error {
 	registry := adapter.GetEventRegistry()
 	key := adapter.GetKey()
-	initialSequence, uncomitted := adapter.GetUncomittedEvents()
+	initialSequence, uncommitted := adapter.GetUncomittedEvents()
 
-	// If no uncomitted events, exit
-	if len(uncomitted) == 0 {
+	// If no uncommitted events, exit
+	if len(uncommitted) == 0 {
 		return nil
 	}
 
@@ -118,7 +118,7 @@ func (store *store) CommitEvents(adapter eventsourcing.StoreWriterAdapter) error
 	}
 
 	// We're all good now, lets write the events
-	for _, event := range uncomitted {
+	for _, event := range uncommitted {
 		// Event type mapping
 		eventType, found := registry.GetEventType(event)
 		if !found {
@@ -149,7 +149,7 @@ func (store *store) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
 	reg := adapter.GetEventRegistry()
 	seq := adapter.SequenceNumber()
 
-	// If the aggregate is dirty, prevent refresh from occuring.
+	// If the aggregate is dirty, prevent refresh from occurring.
 	if adapter.IsDirty() {
 		return fmt.Errorf("StoreError: Aggregate %v is modified", key)
 	}

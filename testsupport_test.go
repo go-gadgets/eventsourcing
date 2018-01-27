@@ -34,8 +34,12 @@ func (agg *SimpleAggregate) Initialize(key string, registry EventRegistry, store
 }
 
 func (agg *SimpleAggregate) Init(target int) {
-	return 
+	agg.ApplyEvent(InitializeEvent{
+		TargetValue: target,
+	})
+	return
 }
+
 // ReplayInitializeEvent applies an InitializeEvent to the model.
 func (agg *SimpleAggregate) ReplayInitializeEvent(event InitializeEvent) {
 	agg.TargetValue = event.TargetValue
