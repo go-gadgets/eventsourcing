@@ -1,0 +1,22 @@
+language: go
+go: 
+ - 1.9
+ - 1.8
+ - release
+ - tip
+
+script:
+ - go test -v -cover . -coverprofile=coverage-core.out
+ - go test -v -cover ./stores/in-memory -coverprofile=coverage-memory.out
+ - go test -v -cover ./stores/mongo -coverprofile=coverage-mongo.out
+ - go test -bench=.
+ - go test -bench=./stores/in-memory
+ - go test -bench=./stores/mongo
+ - echo "" > coverage.txt
+ - cat coverage-core.out >> coverage.txt
+ - cat coverage-memory.out >> coverage.txt
+ - cat coverage-mongo.out >> coverage.txt
+ - rm -f *.out
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
