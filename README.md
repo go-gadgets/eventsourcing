@@ -6,8 +6,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![stability-experimental](https://img.shields.io/badge/stability-experimental-orange.svg)](https://github.com/emersion/stability-badges#experimental)
 
-An opinionated event-sourcing framework, written in Go. Currently 
-
 ## Installation
 To install this package, please use [gopkg.in](https://gopkg.in/go-gadgets/eventsourcing.v0) instead of Github:
 
