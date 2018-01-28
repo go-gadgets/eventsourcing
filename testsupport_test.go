@@ -9,7 +9,7 @@ package eventsourcing
 var counterRegistry EventRegistry
 
 func init() {
-	counterRegistry = NewStandardEventRegistry()
+	counterRegistry = NewStandardEventRegistry("Testing")
 	counterRegistry.RegisterEvent(InitializeEvent{})
 	counterRegistry.RegisterEvent(IncrementEvent{})
 }

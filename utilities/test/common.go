@@ -5,7 +5,7 @@ import "github.com/go-gadgets/eventsourcing"
 var counterRegistry eventsourcing.EventRegistry
 
 func init() {
-	counterRegistry = eventsourcing.NewStandardEventRegistry()
+	counterRegistry = eventsourcing.NewStandardEventRegistry("Testing")
 	counterRegistry.RegisterEvent(InitializeEvent{})
 	counterRegistry.RegisterEvent(IncrementEvent{})
 }

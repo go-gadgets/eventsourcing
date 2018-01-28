@@ -58,7 +58,7 @@ An aggregate (root) is an entity that's defined by the series of events that hap
 var registry eventsourcing.EventRegistry
 
 func init() {
-	registry = eventsourcing.NewStandardEventRegistry()
+	registry = eventsourcing.NewStandardEventRegistry("ExampleDomain")
 	registry.RegisterEvent(IncrementEvent{})
 }
 

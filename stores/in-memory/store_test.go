@@ -119,7 +119,7 @@ func TestMemoryStoreAppendPastEnd(t *testing.T) {
 // TestMemoryStoreErrorOnUnmapped checks that you can't call store if you've
 // put events in the queue that are not mapped.
 func TestMemoryStoreErrorOnUnmapped(t *testing.T) {
-	registry := eventsourcing.NewStandardEventRegistry()
+	registry := eventsourcing.NewStandardEventRegistry("Testing")
 	store := NewStore()
 	exampleEvents := []eventsourcing.Event{
 		test.UnknownEventTypeExample{},

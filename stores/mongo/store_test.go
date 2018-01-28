@@ -163,7 +163,7 @@ func TestMongoStoreAppendPastEnd(t *testing.T) {
 // TestMongoStoreErrorOnUnmapped checks that you can't call store if you've
 // put events in the queue that are not mapped.
 func TestMongoStoreErrorOnUnmapped(t *testing.T) {
-	registry := eventsourcing.NewStandardEventRegistry()
+	registry := eventsourcing.NewStandardEventRegistry("Testing")
 	store, cleanup, errStore := CreateTestMongoStore()
 	if errStore != nil {
 		t.Error(errStore)

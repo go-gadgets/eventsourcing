@@ -8,7 +8,7 @@ import "github.com/stretchr/testify/assert"
 // TestRegistryStandardCreateUnmappedEvent checks that when an event is undefined, it gets summoned as
 // a map[string]interface{}
 func TestRegistryStandardCreateUnmappedEvent(t *testing.T) {
-	registry := NewStandardEventRegistry()
+	registry := NewStandardEventRegistry("Testing")
 	instance := registry.CreateEvent(EventType("Does-Not-Exist"))
 
 	_, ok := instance.(map[string]interface{})

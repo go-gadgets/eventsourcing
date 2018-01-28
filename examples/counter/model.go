@@ -7,7 +7,7 @@ import (
 var registry eventsourcing.EventRegistry
 
 func init() {
-	registry = eventsourcing.NewStandardEventRegistry()
+	registry = eventsourcing.NewStandardEventRegistry("DemoModel")
 	registry.RegisterEvent(IncrementEvent{})
 }
 
@@ -34,7 +34,7 @@ func (agg *CounterAggregate) Initialize(key string, store eventsourcing.EventSto
 // HandleIncrementCommand handles an increment command from the bus.
 func (agg *CounterAggregate) HandleIncrementCommand(command IncrementCommand) ([]eventsourcing.Event, error) {
 	// Limit is 30, then we explode.
-	if agg.Count <= 30 {
+	if agg.Count >= 30 {
 		return nil, eventsourcing.NewDomainFault(agg.GetKey(), "limit_reached")
 	}
 

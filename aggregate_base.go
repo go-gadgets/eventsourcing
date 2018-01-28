@@ -299,7 +299,7 @@ func buildReplayMappings(subject interface{}) map[EventType]func(Event) {
 		// The event type is the second parameter in an instance
 		// method, since the first parameter is the instance
 		eventType := candidate.Type.In(1)
-		eventTypeName := EventType(eventType.String())
+		eventTypeName := EventType(NormalizeEventName(eventType.String()))
 		eventReplay[eventTypeName] = handler
 	}
 	return eventReplay

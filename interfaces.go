@@ -74,6 +74,9 @@ type EventRegistry interface {
 	// CreateEvent creates an instance of an event
 	CreateEvent(EventType) Event
 
+	// Domain this registry contains events for
+	Domain() string
+
 	// GetEventType determines the EventType of an event
 	GetEventType(interface{}) (EventType, bool)
 
