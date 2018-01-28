@@ -54,6 +54,18 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/steve-gray/mgo-eventsourcing"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram"
+  ]
+  revision = "6f2a776a58b83c0267d1ffb650fb92223a1fe97d"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
@@ -79,18 +91,6 @@
 
 [[projects]]
   branch = "v2"
-  name = "gopkg.in/mgo.v2"
-  packages = [
-    ".",
-    "bson",
-    "internal/json",
-    "internal/sasl",
-    "internal/scram"
-  ]
-  revision = "3f83fa5005286a7fe593b055f0d7771a7dce4655"
-
-[[projects]]
-  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
@@ -98,6 +98,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "04e050736428485b2ce6429979e71fe11269b6cd68792a37c4549679ce82fddb"
+  inputs-digest = "9c260a4f536fed8c77c1fb520ca465fd50af343616ce58c6b2516994b8ba69d8"
   solver-name = "gps-cdcl"
   solver-version = 1
