@@ -2,13 +2,11 @@ package mongo
 
 import (
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
 
 var counterRegistry eventsourcing.EventRegistry
 
 func init() {
-	bson.SetJSONFallback(true)
 	counterRegistry = eventsourcing.NewStandardEventRegistry()
 	counterRegistry.RegisterEvent(InitializeEvent{})
 	counterRegistry.RegisterEvent(IncrementEvent{})

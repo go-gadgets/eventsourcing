@@ -6,11 +6,15 @@ import (
 
 	"strings"
 
-	"github.com/steve-gray/mgo-eventsourcing"
-	"github.com/steve-gray/mgo-eventsourcing/bson"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/mitchellh/mapstructure"
+	"github.com/steve-gray/mgo-eventsourcing"
+	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
+
+func init() {
+	bson.SetJSONFallback(true)
+}
 
 // mongoDBEventStore is a type that represents a MongoDB backed
 // EventStore implementation
