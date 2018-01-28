@@ -1,10 +1,14 @@
 package mongo
 
-import "github.com/go-gadgets/eventsourcing"
+import (
+	"github.com/go-gadgets/eventsourcing"
+	"github.com/steve-gray/mgo-eventsourcing/bson"
+)
 
 var counterRegistry eventsourcing.EventRegistry
 
 func init() {
+	bson.SetJSONFallback(true)
 	counterRegistry = eventsourcing.NewStandardEventRegistry()
 	counterRegistry.RegisterEvent(InitializeEvent{})
 	counterRegistry.RegisterEvent(IncrementEvent{})
@@ -14,13 +18,13 @@ func init() {
 // down.
 type TestOnlyAggregate struct {
 	eventsourcing.AggregateBase
-	CurrentCount int `json:"current_count"`
-	TargetValue  int `json:"target_value"`
+	CurrentCount int `json:"current_count" bson:"current_count"`
+	TargetValue  int `json:"target_value" bson:"target_value"`
 }
 
 // Initialize the aggregate
-func (agg *TestOnlyAggregate) Initialize(key string, registry eventsourcing.EventRegistry, store eventsourcing.EventStore) {
-	agg.AggregateBase.Initialize(key, registry, store, func() interface{} { return agg })
+func (agg *TestOnlyAggregate) Initialize(key string, registry eventsourcing.EventRegistry, store eventsourcing.EventStore, stateFunc eventsourcing.StateFetchFunc) {
+	agg.AggregateBase.Initialize(key, registry, store, stateFunc)
 	agg.AggregateBase.AutomaticWireup(agg)
 }
 
@@ -49,24 +53,24 @@ func (agg *TestOnlyAggregate) ReplayEventWithTooManyArgumentsMapping(event Event
 // of an event.
 type InitializeEvent struct {
 	// TargetValue is the value the counter will count towards.
-	TargetValue int `json:"target_value"`
+	TargetValue int `json:"target_value" bson:"target_value"`
 }
 
 // IncrementEvent represents an event that increments the model value
 type IncrementEvent struct {
-	IncrementBy int `json:"increment_by"`
+	IncrementBy int `json:"increment_by" bson:"target_value"`
 }
 
 // EventWithInvalidReturnMapping is an event that does not have a good
 // mapping - it has a reutrn value.
 type EventWithInvalidReturnMapping struct {
-	IncrementBy int `json:"increment_by"`
+	IncrementBy int `json:"increment_by" bson:"target_value"`
 }
 
 // EventWithTooManyArgumentsMapping is an event that does not have a good
 // mapping - it has too many arguments to the replay method.
 type EventWithTooManyArgumentsMapping struct {
-	IncrementBy int `json:"increment_by"`
+	IncrementBy int `json:"increment_by" bson:"target_value"`
 }
 
 // UnknownEventTypeExample is an event that is just made out of the ether, and is not

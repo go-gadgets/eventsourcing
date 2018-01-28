@@ -1,11 +1,9 @@
 package mongo
 
 import (
-	"fmt"
-
+	mgo "github.com/steve-gray/mgo-eventsourcing"
+	"github.com/steve-gray/mgo-eventsourcing/bson"
 	"github.com/go-gadgets/eventsourcing"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // Snapshot is the current snapshot for an entity, a JSON structure
@@ -13,7 +11,7 @@ import (
 type snapshot struct {
 	Key      string      `json:"_id"`
 	Sequence int64       `json:"sequence"`
-	State    interface{} `json:"aggregate_state"`
+	State    interface{} `json:"state"`
 }
 
 // snapStore is a type that represents a MongoDB backed
@@ -107,11 +105,6 @@ func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error 
 	// Only run the the snapshot fetch if an outer-driver has not already refreshed
 	// the aggregate state. This allows for composition of snap-drivers.
 	if adapter.SequenceNumber() == 0 {
-		// If the aggregate is dirty, prevent refresh from occurring.
-		if adapter.IsDirty() {
-			return fmt.Errorf("StoreError: Aggregate %v is modified", key)
-		}
-
 		// Load the events from mgo
 		var loaded snapshot
 		errLoad := store.collection.Find(

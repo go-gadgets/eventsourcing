@@ -15,11 +15,15 @@ type MongoStoreWriter struct {
 	eventRegistry    eventsourcing.EventRegistry
 	uncomittedOrigin int64
 	uncomittedEvents []eventsourcing.Event
+	state            interface{}
 }
 
 // GetState fetches the aggregate state. In this test, it's a dummy implementation
 func (instance *MongoStoreWriter) GetState() interface{} {
-	return map[string]interface{}{}
+	if instance.state == nil {
+		return map[string]interface{}{}
+	}
+	return instance.state
 }
 
 // GetKey gets the key of the aggregate being stored
@@ -74,7 +78,7 @@ func CreateTestMongoStore() (eventsourcing.EventStore, func(), error) {
 // TestMongoStoreEventStorage checks that the events are stored and loaded as expected from
 // the specified event-store.
 func TestMongoStoreEventStorage(t *testing.T) {
-	instance := &TestOnlyAggregate{}
+	instance := TestOnlyAggregate{}
 	store, cleanup, errStore := CreateTestMongoStore()
 	if errStore != nil {
 		t.Error(errStore)
@@ -83,11 +87,10 @@ func TestMongoStoreEventStorage(t *testing.T) {
 	defer cleanup()
 
 	// 1: Get event
-	instance.Initialize("dummy-key", counterRegistry, store)
+	instance.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &instance })
 	instance.Refresh()
 
 	// 2: Apply event
-	instance.Commit()
 	instance.ApplyEvent(InitializeEvent{
 		TargetValue: 3,
 	})
@@ -96,8 +99,8 @@ func TestMongoStoreEventStorage(t *testing.T) {
 	instance.Commit()
 
 	// 4: Reload
-	reloaded := &TestOnlyAggregate{}
-	reloaded.Initialize("dummy-key", counterRegistry, store)
+	reloaded := TestOnlyAggregate{}
+	reloaded.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &reloaded })
 	assert.Equal(t, 0, reloaded.TargetValue, "The aggregate target value should be unset")
 	reloaded.Refresh()
 	assert.Equal(t, 3, reloaded.TargetValue, "The aggregate target value should be 3")
@@ -188,15 +191,15 @@ func TestMongoStoreConcurrency(t *testing.T) {
 	}
 	defer cleanup()
 
-	firstInstance := &TestOnlyAggregate{}
-	firstInstance.Initialize("dummy-key", counterRegistry, store)
+	firstInstance := TestOnlyAggregate{}
+	firstInstance.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &firstInstance })
 	firstInstance.Refresh()
 	firstInstance.ApplyEvent(InitializeEvent{
 		TargetValue: 3,
 	})
 
-	secondInstance := &TestOnlyAggregate{}
-	secondInstance.Initialize("dummy-key", counterRegistry, store)
+	secondInstance := TestOnlyAggregate{}
+	secondInstance.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &secondInstance })
 	secondInstance.Refresh()
 	secondInstance.ApplyEvent(InitializeEvent{
 		TargetValue: 5,
@@ -213,14 +216,14 @@ func TestMongoStoreConcurrency(t *testing.T) {
 
 // BenchmarkMongoStoreIndividualEventReplay tests how fast we can apply events to an aggregate
 func BenchmarkMongoStoreIndividualEventCommit(b *testing.B) {
-	instance := &TestOnlyAggregate{}
+	instance := TestOnlyAggregate{}
 	store, cleanup, errStore := CreateTestMongoStore()
 	if errStore != nil {
 		b.Error(errStore)
 		return
 	}
 	defer cleanup()
-	instance.Initialize("dummy-key", counterRegistry, store)
+	instance.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &instance })
 
 	for i := 0; i < b.N; i++ {
 		instance.ApplyEvent(IncrementEvent{
@@ -244,8 +247,8 @@ func BenchmarkMongoStoreLoad1000Events(b *testing.B) {
 			return
 		}
 		defer cleanup()
-		instance := &TestOnlyAggregate{}
-		instance.Initialize("dummy-key", counterRegistry, store)
+		instance := TestOnlyAggregate{}
+		instance.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &instance })
 		instance.Refresh()
 		for x := 0; x < 1000; x++ {
 			instance.ApplyEvent(IncrementEvent{
@@ -255,8 +258,8 @@ func BenchmarkMongoStoreLoad1000Events(b *testing.B) {
 		instance.Commit()
 
 		// Reload
-		reload := &TestOnlyAggregate{}
-		reload.Initialize("dummy-key", counterRegistry, store)
+		reload := TestOnlyAggregate{}
+		reload.Initialize("dummy-key", counterRegistry, store, func() interface{} { return &reload })
 		reload.Refresh()
 		assert.Equal(b, 1000, instance.CurrentCount)
 	}

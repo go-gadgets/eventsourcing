@@ -13,8 +13,8 @@ func init() {
 
 // CounterAggregate counts the number of times it's been incremented.
 type CounterAggregate struct {
-	eventsourcing.AggregateBase `json:"-" bson:"-"`
-	Count                       int `json:"count" bson:"count"`
+	eventsourcing.AggregateBase `json:"-"`
+	Count                       int `json:"count"`
 }
 
 // IncrementCommand is a command to increment an aggregates value

@@ -341,11 +341,22 @@ func (adapter *aggregateBaseLoaderAdapter) ReplayEvent(event Event) {
 // RestoreSnapshot sets the current position and restores the snapshot
 // state over the top of the aggregate.
 func (adapter *aggregateBaseLoaderAdapter) RestoreSnapshot(sequence int64, snapshot interface{}) error {
-	errDecode := mapstructure.Decode(snapshot, adapter.state)
+	config := &mapstructure.DecoderConfig{
+		TagName:          "json",
+		Result:           adapter.state,
+		WeaklyTypedInput: true,
+	}
+	decoder, errDecoder := mapstructure.NewDecoder(config)
+	if errDecoder != nil {
+		return errDecoder
+	}
+
+	errDecode := decoder.Decode(snapshot)
 	if errDecode == nil {
 		adapter.aggregate.sequenceNumber = sequence
 		adapter.aggregate.committedSequenceNumber = sequence
 	}
+
 	return errDecode
 }
 

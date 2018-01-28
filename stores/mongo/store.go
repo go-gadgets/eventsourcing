@@ -6,10 +6,10 @@ import (
 
 	"strings"
 
+	"github.com/steve-gray/mgo-eventsourcing"
+	"github.com/steve-gray/mgo-eventsourcing/bson"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // mongoDBEventStore is a type that represents a MongoDB backed
@@ -24,8 +24,8 @@ type mongoDBEventStore struct {
 type mongoDBEvent struct {
 	Key       string                  `json:"key"`
 	Sequence  int64                   `json:"sequence"`
-	EventType eventsourcing.EventType `json:"event_type" bson:"event_type"`
-	EventData interface{}             `json:"event_data" bson:"event_data"`
+	EventType eventsourcing.EventType `json:"event_type"`
+	EventData interface{}             `json:"event_data"`
 }
 
 // StoreParameters are parameters for the MongoDB event store
@@ -150,7 +150,18 @@ func (store *mongoDBEventStore) Refresh(adapter eventsourcing.StoreLoaderAdapter
 	toApply := make([]eventsourcing.Event, len(loaded))
 	for index, event := range loaded {
 		summoned := reg.CreateEvent(event.EventType)
-		errDecode := mapstructure.Decode(event.EventData, summoned)
+
+		config := &mapstructure.DecoderConfig{
+			TagName:          "json",
+			Result:           summoned,
+			WeaklyTypedInput: true,
+		}
+		decoder, errDecoder := mapstructure.NewDecoder(config)
+		if errDecoder != nil {
+			return errDecoder
+		}
+
+		errDecode := decoder.Decode(event.EventData)
 		if errDecode != nil {
 			return errDecode
 		}
