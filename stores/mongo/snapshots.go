@@ -1,9 +1,9 @@
 package mongo
 
 import (
+	"github.com/go-gadgets/eventsourcing"
 	mgo "github.com/steve-gray/mgo-eventsourcing"
 	"github.com/steve-gray/mgo-eventsourcing/bson"
-	"github.com/go-gadgets/eventsourcing"
 )
 
 // Snapshot is the current snapshot for an entity, a JSON structure
