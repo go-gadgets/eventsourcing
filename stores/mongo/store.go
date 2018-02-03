@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/go-gadgets/eventsourcing"
-	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
+	"github.com/go-gadgets/eventsourcing/stores/key-value"
 	"github.com/steve-gray/mgo-eventsourcing"
 	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
