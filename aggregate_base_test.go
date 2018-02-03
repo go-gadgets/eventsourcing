@@ -120,6 +120,46 @@ func TestBaseAggregateErrorPropegation(t *testing.T) {
 	assert.Equal(t, store.errorToReturn, errSave)
 }
 
+// TestBaseAggregateUnknownCommand validates that an error occurs when an unknown command
+// is referenced.
+func TestBaseAggregateUnknownCommand(t *testing.T) {
+	instance := &SimpleAggregate{}
+	store := NewNullStore()
+	instance.Initialize("dummy-key", counterRegistry, store)
+	instance.Refresh()
+
+	errCommand := instance.Handle(UnknownCommandExample{})
+	assert.NotNil(t, errCommand)
+}
+
+// TestBaseAggregateGetKey validates we can fetch an aggregates key
+func TestBaseAggregateGetKey(t *testing.T) {
+	instance := &SimpleAggregate{}
+	store := NewNullStore()
+	instance.Initialize("dummy-key", counterRegistry, store)
+	instance.Refresh()
+
+	assert.Equal(t, "dummy-key", instance.GetKey())
+}
+
+// TestBaseAggregateRunErrorHandling checks that we can handle errors
+func TestBaseAggregateRunErrorHandling(t *testing.T) {
+	instance := &SimpleAggregate{}
+	store := &errorStore{
+		errorToReturn: errors.New("Example error"),
+	}
+	instance.Initialize("dummy-key", counterRegistry, store)
+
+	fail := false
+	errRefresh := instance.Run(func() error {
+		fail = true
+		return nil
+	})
+
+	assert.False(t, fail)
+	assert.Equal(t, store.errorToReturn, errRefresh)
+}
+
 // BenchmarkBaseAggregateWireupSpeed checks how fast an aggregate is initialized
 // and goes through the reflection-heavy startup process.
 func BenchmarkBaseAggregateWireupSpeed(b *testing.B) {

@@ -109,6 +109,10 @@ type EventWithTooManyArgumentsMapping struct {
 	IncrementBy int `json:"increment_by"`
 }
 
+// UnknownCommandExample is a commadn that doesnt exist
+type UnknownCommandExample struct {
+}
+
 // UnknownEventTypeExample is an event that is just made out of the ether, and is not
 // supported by SimpleAggregate. What should happen here is that the sequence
 // jumps even though it's not wired up.
