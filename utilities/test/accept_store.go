@@ -61,8 +61,14 @@ func CheckStandardSuite(t *testing.T, name string, provider StoreProvider) {
 	fmt.Println("  >> Concurrency support")
 	CheckConcurrencyValidation(t, provider)
 
-	fmt.Println("  >> Write past EOF for aggregate.")
+	fmt.Println("  >> Write past EOF for aggregate")
 	CheckWritePastEnd(t, provider)
+
+	fmt.Println("  >> Check repeated read/write cycles")
+	CheckWriteReadWriteRead(t, provider)
+
+	fmt.Println("  >> Check refresh of dirty aggregate fails")
+	CheckDirtyRefresh(t, provider)
 }
 
 // CheckStartupShutdown checks a store starts up and shuts down cleanly.
@@ -165,6 +171,69 @@ func CheckWritePastEnd(t *testing.T, provider StoreProvider) {
 		errStore := store.CommitEvents(writer)
 		if errStore == nil {
 			return fmt.Errorf("Expected an error when writing past end, got none")
+		}
+
+		return nil
+	})
+}
+
+// CheckWriteReadWriteRead checks that we can perform a looping read/write cycle
+// where we keep appending events to an aggregate.
+func CheckWriteReadWriteRead(t *testing.T, provider StoreProvider) {
+	execute(t, provider, func(store eventsourcing.EventStore) error {
+		agg := SimpleAggregate{}
+		agg.Initialize("dummy-key", GetTestRegistry(), store)
+		agg.Refresh()
+		agg.ApplyEvent(InitializeEvent{
+			TargetValue: 50,
+		})
+		errInitial := agg.Commit()
+		if errInitial != nil {
+			return errInitial
+		}
+
+		for x := 0; x < 50; x++ {
+			agg.ApplyEvent(IncrementEvent{
+				IncrementBy: 1,
+			})
+			errCommit := agg.Commit()
+			if errCommit != nil {
+				return errCommit
+			}
+
+			errRefresh := agg.Refresh()
+			if errRefresh != nil {
+				return errRefresh
+			}
+		}
+
+		return nil
+	})
+}
+
+// CheckDirtyRefresh checks that we can't refresh a dirty aggregate from the store
+func CheckDirtyRefresh(t *testing.T, provider StoreProvider) {
+	execute(t, provider, func(store eventsourcing.EventStore) error {
+		agg := SimpleAggregate{}
+		agg.Initialize("dummy-key", GetTestRegistry(), store)
+		agg.Refresh()
+		agg.ApplyEvent(InitializeEvent{
+			TargetValue: 50,
+		})
+		errInitial := agg.Commit()
+		if errInitial != nil {
+			return errInitial
+		}
+
+		for x := 0; x < 10; x++ {
+			agg.ApplyEvent(IncrementEvent{
+				IncrementBy: 1,
+			})
+		}
+
+		errRefresh := agg.Refresh()
+		if errRefresh == nil {
+			return fmt.Errorf("Should not have been able to refresh: aggregate was unclean")
 		}
 
 		return nil
