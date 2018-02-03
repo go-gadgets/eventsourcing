@@ -25,14 +25,14 @@ type snapStore struct {
 	mutex        sync.Mutex
 }
 
-// SnapParameters describes the parameters that can be used to configure the snap store.
-type SnapParameters struct {
+// Parameters describes the parameters that can be used to configure the snap store.
+type Parameters struct {
 	SnapInterval int64 `json:"snap_interval"` // SnapInterval is the number of events between snaps
 }
 
-// NewSnapStore creates a a new instance of the MongoDB backed snapshot provider,
+// NewStore creates a a new instance of the MongoDB backed snapshot provider,
 // which provides aggregate replay acceleration for long-lived entities.
-func NewSnapStore(params SnapParameters, wrapped eventsourcing.EventStore) eventsourcing.EventStore {
+func NewStore(params Parameters, wrapped eventsourcing.EventStore) eventsourcing.EventStore {
 	return &snapStore{
 		eventStore:   wrapped,
 		snapInterval: params.SnapInterval,
