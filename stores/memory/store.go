@@ -2,22 +2,32 @@ package memory
 
 import (
 	"encoding/json"
-	"fmt"
-	"reflect"
 
 	"github.com/go-gadgets/eventsourcing"
+	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
 )
 
 // NewStore creates a new in memory event store.
 func NewStore() eventsourcing.EventStore {
-	return &store{
+	provider := &state{
 		streams: make(map[string][]item),
 	}
+
+	store := keyvalue.NewStore(keyvalue.Options{
+		CheckSequence: provider.checkExists,
+		FetchEvents:   provider.fetchEvents,
+		PutEvents:     provider.putEvents,
+		Close: func() error {
+			provider.streams = nil
+			return nil
+		},
+	})
+
+	return store
 }
 
-// store represents an ephemeral event storage provider, storing events in-memory for the
-// purposes of supporting unit tests, or disposable-data scenarios.
-type store struct {
+// state contains the current data for an in-memory store.
+type state struct {
 	// streams is a map of string-serialized event streams. This is to ensure
 	// that we are actually round-tripping to a non-native object, rather
 	// that storing instances directly or by pointers
@@ -33,144 +43,72 @@ type item struct {
 	body []byte
 }
 
-// loadEvents loads events for the specified aggregate that are beyond the
-// specified baseSequence number.
-func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry, baseSequence int64) ([]eventsourcing.Event, error) {
-	// No stream, empty list.
-	stream, hasStream := store.streams[key]
-	if !hasStream {
-		return make([]eventsourcing.Event, 0), nil
+// checkExists checks that a particular sequence number exists in the store.
+func (data *state) checkExists(key string, seq int64) (bool, error) {
+	stream, found := data.streams[key]
+	if !found {
+		return false, nil
 	}
 
-	// Create our events set
-	result := make([]eventsourcing.Event, 0)
+	return len(stream) >= int(seq), nil
+}
 
-	// Iterate events
-	for index, item := range stream {
-		// Skip anything less than what we're after.
-		if index < int(baseSequence) {
-			continue
-		}
+// fetchEvents checks all events beyond the specified sequence number.
+func (data *state) fetchEvents(key string, seq int64) ([]keyvalue.KeyedEvent, error) {
+	stream, found := data.streams[key]
 
-		// Summon a blank event
-		itemEventType := eventsourcing.EventType(item.eventType)
-		summonedType := registry.CreateEvent(itemEventType)
+	// If no stream, or we've only got prior events, then return an empty
+	// set of events.
+	if !found || len(stream) < int(seq) {
+		return []keyvalue.KeyedEvent{}, nil
+	}
 
-		// Store the event
-		errUnmarshal := json.Unmarshal(item.body, &summonedType)
+	result := make([]keyvalue.KeyedEvent, 0)
+	for index := int(seq); index < len(stream); index++ {
+		// Rehydrate the JSON
+		target := make(map[string]interface{})
+		errUnmarshal := json.Unmarshal(stream[index].body, &target)
 		if errUnmarshal != nil {
 			return nil, errUnmarshal
 		}
 
-		// This reflection evil is needed because we are now trying
-		// to turn the event structure pointer back into a raw instance
-		// of the structure, so as to maintain immutability/pass-by-value.
-		result = append(result, summonedType)
-		slice := reflect.ValueOf(result)
-		target := slice.Index(index)
-		target.Set(reflect.ValueOf(summonedType).Elem())
+		result = append(result, keyvalue.KeyedEvent{
+			Key:       key,
+			Sequence:  seq + int64(1+index),
+			EventType: stream[index].eventType,
+			EventData: target,
+		})
 	}
-
 	return result, nil
 }
 
-// Close the event-store driver
-func (store *store) Close() error {
-	store.streams = nil
-	return nil
-}
-
-// CommitEvents stores the events associated with the specified aggregate.
-func (store *store) CommitEvents(adapter eventsourcing.StoreWriterAdapter) error {
-	registry := adapter.GetEventRegistry()
-	key := adapter.GetKey()
-	initialSequence, uncommitted := adapter.GetUncomittedEvents()
-
-	// If no uncommitted events, exit
-	if len(uncommitted) == 0 {
-		return nil
-	}
-
-	// Get the stream
-	stream, ok := store.streams[key]
-
-	// If the stream does not exist...
-	if !ok {
-		// Thats fine, for sequence 0
-		if initialSequence == 0 {
-			stream = make([]item, 0)
-		} else {
-			// But we can't append to non-zero index of empty stream
-			return fmt.Errorf(
-				"StoreError: Cannot store events at %v for key %v: the stream does not exist",
-				initialSequence, key)
-		}
-	} else {
-		// If we're appending far beyond the end of the stream....
-		initialSequenceInt := int(initialSequence)
-		if initialSequenceInt > len(stream) {
-			return fmt.Errorf(
-				"StoreError: Cannot store events at %v for key %v: the stream is only %v long",
-				initialSequence,
-				key,
-				len(stream),
-			)
-		}
-
-		// If we are writing to position that's already
-		// occupied, then throw a concurrency fault
-		if initialSequenceInt < len(stream) {
-			return eventsourcing.NewConcurrencyFault(key, initialSequence)
-		}
-	}
-
-	// We're all good now, lets write the events
-	for _, event := range uncommitted {
-		// Event type mapping
-		eventType, found := registry.GetEventType(event)
+// putEvents writes events to the store
+func (data *state) putEvents(events []keyvalue.KeyedEvent) error {
+	for _, evt := range events {
+		stream, found := data.streams[evt.Key]
 		if !found {
-			return fmt.Errorf("StoreError: Could not find event type to store: %v", event)
+			stream = make([]item, 0)
 		}
 
-		// Encode the event
-		encoded, errMarshal := json.Marshal(event)
+		// Concurrency check (are we inserting over the top of an event?)
+		// (Event Seq=1 is array index 0)
+		expectedLength := int(evt.Sequence - 1)
+		if len(stream) > expectedLength {
+			return eventsourcing.NewConcurrencyFault(evt.Key, evt.Sequence)
+		}
+
+		buff, errMarshal := json.Marshal(evt.EventData)
 		if errMarshal != nil {
 			return errMarshal
 		}
 
-		// Append the event
 		stream = append(stream, item{
-			eventType: eventType,
-			body:      encoded,
+			eventType: evt.EventType,
+			body:      buff,
 		})
 
-	}
-
-	store.streams[key] = stream
-
-	return nil
-}
-
-// Refresh the state of the aggregate from the store.
-func (store *store) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
-	key := adapter.GetKey()
-	reg := adapter.GetEventRegistry()
-	seq := adapter.SequenceNumber()
-
-	// If the aggregate is dirty, prevent refresh from occurring.
-	if adapter.IsDirty() {
-		return fmt.Errorf("StoreError: Aggregate %v is modified", key)
-	}
-
-	// Load the events
-	events, errEvents := store.loadEvents(key, reg, seq)
-	if errEvents != nil {
-		return errEvents
-	}
-
-	// Apply each event to bring the state back to current
-	for _, evt := range events {
-		adapter.ReplayEvent(evt)
+		// Write back to the structure
+		data.streams[evt.Key] = stream
 	}
 
 	return nil
