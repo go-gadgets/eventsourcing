@@ -1,4 +1,4 @@
-package mongo
+package mongosnap
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
+	"github.com/go-gadgets/eventsourcing/stores/memory"
 	"github.com/go-gadgets/eventsourcing/utilities/test"
 	"github.com/satori/go.uuid"
 	mgo "github.com/steve-gray/mgo-eventsourcing"
@@ -18,11 +19,13 @@ func provider() (eventsourcing.EventStore, func(), error) {
 		dial = "mongodb://localhost:27017"
 	}
 
-	result, err := NewStore(StoreParameters{
+	baseStore := memory.NewStore()
+	result, err := NewStore(Parameters{
 		DialURL:        dial,
 		DatabaseName:   "TestDatabase",
 		CollectionName: collectionName,
-	})
+		SnapInterval:   5,
+	}, baseStore)
 
 	return result, func() {
 		// Connect to the MongoDB services
@@ -36,7 +39,7 @@ func provider() (eventsourcing.EventStore, func(), error) {
 
 // TestStoreCompliance
 func TestStoreCompliance(t *testing.T) {
-	test.CheckStandardSuite(t, "MongoDB Store", provider)
+	test.CheckStandardSuite(t, "MongoDB Snap-Store", provider)
 }
 
 // BenchmarkIndividualCommmits tests how fast we can apply events to an aggregate

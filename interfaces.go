@@ -93,6 +93,9 @@ type EventStore interface {
 
 	// Refresh refreshes the state of the specified aggregate from the underlying store
 	Refresh(reader StoreLoaderAdapter) error
+
+	// Close shuts down the storage driver.
+	Close() error
 }
 
 // StateFetchFunc is a function that returns the state-value.

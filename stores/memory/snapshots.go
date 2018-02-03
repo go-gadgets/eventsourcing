@@ -1,4 +1,4 @@
-package inmemory
+package memory
 
 import (
 	"fmt"
@@ -38,6 +38,12 @@ func NewSnapStore(params SnapParameters, wrapped eventsourcing.EventStore) event
 		snapInterval: params.SnapInterval,
 		snaps:        make(map[string]snapshot),
 	}
+}
+
+// Close the event-store driver
+func (store *snapStore) Close() error {
+	store.snaps = nil
+	return nil
 }
 
 // CommitEvents stores any events for the specified aggregate that are uncommitted

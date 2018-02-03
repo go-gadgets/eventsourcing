@@ -1,4 +1,4 @@
-package inmemory
+package memory
 
 import (
 	"encoding/json"
@@ -43,7 +43,7 @@ func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry,
 	}
 
 	// Create our events set
-	result := make([]eventsourcing.Event, len(stream))
+	result := make([]eventsourcing.Event, 0)
 
 	// Iterate events
 	for index, item := range stream {
@@ -65,12 +65,19 @@ func (store *store) loadEvents(key string, registry eventsourcing.EventRegistry,
 		// This reflection evil is needed because we are now trying
 		// to turn the event structure pointer back into a raw instance
 		// of the structure, so as to maintain immutability/pass-by-value.
+		result = append(result, summonedType)
 		slice := reflect.ValueOf(result)
 		target := slice.Index(index)
 		target.Set(reflect.ValueOf(summonedType).Elem())
 	}
 
 	return result, nil
+}
+
+// Close the event-store driver
+func (store *store) Close() error {
+	store.streams = nil
+	return nil
 }
 
 // CommitEvents stores the events associated with the specified aggregate.
@@ -136,6 +143,7 @@ func (store *store) CommitEvents(adapter eventsourcing.StoreWriterAdapter) error
 			eventType: eventType,
 			body:      encoded,
 		})
+
 	}
 
 	store.streams[key] = stream

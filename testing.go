@@ -49,6 +49,11 @@ func (store *TestStore) When(key string, offset int64, events []Event, state int
 	}
 }
 
+// Close the test store
+func (store *TestStore) Close() error {
+	return nil
+}
+
 // CommitEvents stores the events
 func (store *TestStore) CommitEvents(writer StoreWriterAdapter) error {
 	seq, evt := writer.GetUncomittedEvents()

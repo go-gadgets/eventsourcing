@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
+	"github.com/go-gadgets/eventsourcing/stores/mongosnap"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	}
 
 	// Wrap the event store in a snapshot wrapper
-	store, errSnap := mongo.NewSnapStore(mongo.SnapParameters{
+	store, errSnap := mongosnap.NewStore(mongosnap.Parameters{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
 		CollectionName: "Counters-Snapshot",

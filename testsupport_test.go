@@ -121,6 +121,11 @@ type UnknownEventTypeExample struct {
 type NullStore struct {
 }
 
+// Close the event store
+func (store *NullStore) Close() error {
+	return nil
+}
+
 // CommitEvents writes events to a backing store. However, for the NullStore we
 // simply do nothing and discard anything sent in.
 func (store *NullStore) CommitEvents(adapter StoreWriterAdapter) error {
@@ -151,6 +156,11 @@ func CreateErrorStore(err error) EventStore {
 	return &errorStore{
 		errorToReturn: err,
 	}
+}
+
+// Close the store
+func (store *errorStore) Close() error {
+	return nil
 }
 
 // CommitEvents writes events to a backing store. However, for the errorStore we

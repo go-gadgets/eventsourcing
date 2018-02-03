@@ -22,8 +22,7 @@ The features of this framework are:
    - The counter-example is less than 150 lines of code, including snapshot support, Mongo persistence and a web-server API.
 - Pluggable event-store engines:
   - MongoDB 
-  - InMemory
-  - NullStore
+  - In-Memory
 - Snapshot optimisation
   - Allows aggregates to be snapshotted at intervals.
 - Quick-Start helper types:
@@ -117,12 +116,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-gadgets/eventsourcing/stores/in-memory"
+	"github.com/go-gadgets/eventsourcing/stores/memory"
 )
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	store := inmemory.NewStore()
+	store := memory.NewStore()
 
 	r := gin.Default()
 	r.POST("/:name/increment", func(c *gin.Context) {

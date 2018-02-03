@@ -14,6 +14,11 @@ func (store *NullStore) CommitEvents(adapter eventsourcing.StoreWriterAdapter) e
 	return nil
 }
 
+// Close the event store
+func (store *NullStore) Close() error {
+	return nil
+}
+
 // Refresh the state of the aggregate from the store. Does nothing and will
 // never change aggregate state.
 func (store *NullStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {

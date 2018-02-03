@@ -15,6 +15,11 @@ func CreateErrorStore(err error) eventsourcing.EventStore {
 	}
 }
 
+// Close the error-store
+func (store *errorStore) Close() error {
+	return nil
+}
+
 // CommitEvents writes events to a backing store. However, for the errorStore we
 // simply return an error.
 func (store *errorStore) CommitEvents(adapter eventsourcing.StoreWriterAdapter) error {

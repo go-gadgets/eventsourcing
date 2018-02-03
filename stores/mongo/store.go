@@ -1,13 +1,10 @@
 package mongo
 
 import (
-	"fmt"
-	"reflect"
-
 	"strings"
 
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/mitchellh/mapstructure"
+	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
 	"github.com/steve-gray/mgo-eventsourcing"
 	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
@@ -22,14 +19,6 @@ type mongoDBEventStore struct {
 	session    *mgo.Session
 	database   *mgo.Database
 	collection *mgo.Collection
-}
-
-// mongoDBEvent is the event record type we store into the collection
-type mongoDBEvent struct {
-	Key       string                  `json:"key"`
-	Sequence  int64                   `json:"sequence"`
-	EventType eventsourcing.EventType `json:"event_type"`
-	EventData interface{}             `json:"event_data"`
 }
 
 // StoreParameters are parameters for the MongoDB event store
@@ -62,81 +51,56 @@ func NewStore(params StoreParameters) (eventsourcing.EventStore, error) {
 		return nil, errIndex
 	}
 
-	return &mongoDBEventStore{
+	engine := &mongoDBEventStore{
 		session:    session,
 		database:   database,
 		collection: collection,
-	}, nil
+	}
+
+	store := keyvalue.NewStore(keyvalue.Options{
+		CheckSequence: engine.checkExists,
+		FetchEvents:   engine.fetchEvents,
+		PutEvents:     engine.putEvents,
+		Close: func() error {
+			session.Close()
+			return nil
+		},
+	})
+
+	return store, nil
 }
 
-// CommitEvents stores any events for the specified aggregate that are uncommitted
-// at this point in time.
-func (store *mongoDBEventStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
-	key := writer.GetKey()
-	registry := writer.GetEventRegistry()
-	currentSequenceNumber, events := writer.GetUncomittedEvents()
+// checkExists checks that a particular sequence number exists in the store.
+func (store *mongoDBEventStore) checkExists(key string, seq int64) (bool, error) {
+	var result []interface{}
+	errSequence := store.collection.Find(bson.M{
+		"key":      key,
+		"sequence": seq,
+	}).All(&result)
 
-	// If the current sequence number is > 0, check that
-	// we've got a previous event stored.
-	if currentSequenceNumber > 0 {
-		var result []interface{}
-		errPrevious := store.collection.Find(bson.M{
-			"key":      key,
-			"sequence": currentSequenceNumber,
-		}).All(&result)
-		if errPrevious != nil {
-			return errPrevious
-		}
-		if len(result) != 1 {
-			return fmt.Errorf(
-				"StoreError: Cannot store at index %v if no value for key %v at %v",
-				currentSequenceNumber+1,
-				key,
-				currentSequenceNumber,
-			)
-		}
-	}
+	return result != nil && len(result) == 1, errSequence
+}
 
-	// Prepare a bulk operation, mgo's documents are terrible for this
-	// but I've found example code at http://grokbase.com/t/gg/mgo-users/14ab5yrtb9/mgo-bulk-example
+// putEvents writes events to the backing store.
+func (store *mongoDBEventStore) putEvents(events []keyvalue.KeyedEvent) error {
 	bulk := store.collection.Bulk()
-	for index, rawEvent := range events {
-		itemSequence := currentSequenceNumber + int64(1+index)
-		eventName, found := registry.GetEventType(rawEvent)
-		if !found {
-			return fmt.Errorf("StoreError: Cannot store event, the type is not recognized: %v @ %v",
-				key,
-				itemSequence)
-		}
-
-		bulk.Insert(mongoDBEvent{
-			Key:       key,
-			Sequence:  itemSequence,
-			EventType: eventName,
-			EventData: rawEvent,
-		})
+	for _, event := range events {
+		bulk.Insert(event)
 	}
-
 	_, errBulk := bulk.Run()
+
 	if errBulk != nil && strings.HasPrefix(errBulk.Error(), "E11000") {
-		return eventsourcing.NewConcurrencyFault(key, currentSequenceNumber+1)
+		firstEvent := events[0]
+		return eventsourcing.NewConcurrencyFault(firstEvent.Key, firstEvent.Sequence)
 	}
+
 	return errBulk
 }
 
-// Refresh the state of an aggregate from the store.
-func (store *mongoDBEventStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
-	key := adapter.GetKey()
-	reg := adapter.GetEventRegistry()
-	seq := adapter.SequenceNumber()
-
-	// If the aggregate is dirty, prevent refresh from occurring.
-	if adapter.IsDirty() {
-		return fmt.Errorf("StoreError: Aggregate %v is modified", key)
-	}
-
+// Fetch events from the Mongo store
+func (store *mongoDBEventStore) fetchEvents(key string, seq int64) ([]keyvalue.KeyedEvent, error) {
 	// Load the events from mgo
-	var loaded []mongoDBEvent
+	var loaded []keyvalue.KeyedEvent
 	errLoad := store.collection.Find(
 		bson.M{
 			"key": key,
@@ -147,39 +111,8 @@ func (store *mongoDBEventStore) Refresh(adapter eventsourcing.StoreLoaderAdapter
 	).Sort("sequence").All(&loaded)
 
 	if errLoad != nil {
-		return errLoad
+		return nil, errLoad
 	}
 
-	// Rehydate events
-	toApply := make([]eventsourcing.Event, len(loaded))
-	for index, event := range loaded {
-		summoned := reg.CreateEvent(event.EventType)
-
-		config := &mapstructure.DecoderConfig{
-			TagName:          "json",
-			Result:           summoned,
-			WeaklyTypedInput: true,
-		}
-		decoder, errDecoder := mapstructure.NewDecoder(config)
-		if errDecoder != nil {
-			return errDecoder
-		}
-
-		errDecode := decoder.Decode(event.EventData)
-		if errDecode != nil {
-			return errDecode
-		}
-
-		// Standard reflection voodoo.
-		slice := reflect.ValueOf(toApply)
-		target := slice.Index(index)
-		target.Set(reflect.ValueOf(summoned).Elem())
-	}
-
-	// Apply
-	for _, eventTyped := range toApply {
-		adapter.ReplayEvent(eventTyped)
-	}
-
-	return nil
+	return loaded, nil
 }

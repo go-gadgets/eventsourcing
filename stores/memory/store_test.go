@@ -1,42 +1,22 @@
-package mongo
+package memory
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/utilities/test"
-	"github.com/satori/go.uuid"
-	mgo "github.com/steve-gray/mgo-eventsourcing"
 )
 
 func provider() (eventsourcing.EventStore, func(), error) {
-	collectionName := fmt.Sprintf("%s", uuid.NewV4())
-	dial := os.Getenv("MONGO_TEST_HOST")
-	if dial == "" {
-		dial = "mongodb://localhost:27017"
-	}
-
-	result, err := NewStore(StoreParameters{
-		DialURL:        dial,
-		DatabaseName:   "TestDatabase",
-		CollectionName: collectionName,
-	})
+	result := NewStore()
 
 	return result, func() {
-		// Connect to the MongoDB services
-		session, errSession := mgo.Dial(dial)
-		if errSession != nil {
-			return
-		}
-		session.DB("TestDatabase").DropDatabase()
-	}, err
+	}, nil
 }
 
 // TestStoreCompliance
 func TestStoreCompliance(t *testing.T) {
-	test.CheckStandardSuite(t, "MongoDB Store", provider)
+	test.CheckStandardSuite(t, "In-Memory Store", provider)
 }
 
 // BenchmarkIndividualCommmits tests how fast we can apply events to an aggregate

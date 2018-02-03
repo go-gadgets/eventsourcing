@@ -1,4 +1,4 @@
-package mongo
+package mongosnap
 
 import (
 	"github.com/go-gadgets/eventsourcing"
@@ -26,18 +26,18 @@ type snapStore struct {
 	eventStore   eventsourcing.EventStore
 }
 
-// SnapParameters describes the parameters that can be
+// Parameters describes the parameters that can be
 // used to cofigure a MongoDB snap store.
-type SnapParameters struct {
+type Parameters struct {
 	DialURL        string `json:"dial_url"`        // DialURL is the mgo URL to use when connecting to the cluster
 	DatabaseName   string `json:"database_name"`   // DatabaseName is the database to create/connect to.
 	CollectionName string `json:"collection_name"` // CollectionName is the collection name to put new documents in to
 	SnapInterval   int64  `json:"snap_interval"`   // SnapInterval is the number of events between snaps
 }
 
-// NewSnapStore creates a a new instance of the MongoDB backed snapshot provider,
+// NewStore creates a a new instance of the MongoDB backed snapshot provider,
 // which provides aggregate replay acceleration for long-lived entities.
-func NewSnapStore(params SnapParameters, wrapped eventsourcing.EventStore) (eventsourcing.EventStore, error) {
+func NewStore(params Parameters, wrapped eventsourcing.EventStore) (eventsourcing.EventStore, error) {
 	// Connect to the MongoDB services
 	session, errSession := mgo.Dial(params.DialURL)
 	if errSession != nil {
@@ -66,6 +66,11 @@ func NewSnapStore(params SnapParameters, wrapped eventsourcing.EventStore) (even
 	}, nil
 }
 
+// Close the snap-store
+func (store *snapStore) Close() error {
+	return nil
+}
+
 // CommitEvents stores any events for the specified aggregate that are uncommitted
 // at this point in time.
 func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
@@ -80,22 +85,19 @@ func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) er
 	eventCount := int64(len(events))
 	nextSnap := currentSequenceNumber - (currentSequenceNumber % store.snapInterval) + store.snapInterval
 	writeSnap := currentSequenceNumber+eventCount >= nextSnap
+	if !writeSnap {
+		return nil
+	}
 
 	// Finally, write the snap if needed
 	key := writer.GetKey()
-	if writeSnap == true {
-		_, errSnap := store.collection.UpsertId(key, snapshot{
-			Key:      key,
-			Sequence: currentSequenceNumber + eventCount,
-			State:    writer.GetState(),
-		})
+	_, errSnap := store.collection.UpsertId(key, snapshot{
+		Key:      key,
+		Sequence: currentSequenceNumber + eventCount,
+		State:    writer.GetState(),
+	})
 
-		if errSnap != nil {
-			return errSnap
-		}
-	}
-
-	return nil
+	return errSnap
 }
 
 // Refresh the state of an aggregate from the store.
@@ -114,6 +116,7 @@ func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error 
 		).
 			Sort("-sequence").
 			One(&loaded)
+
 		if errLoad != nil && errLoad != mgo.ErrNotFound {
 			return errLoad
 		}
