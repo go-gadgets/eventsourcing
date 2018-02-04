@@ -14,7 +14,7 @@ test:
 benchmark:
 	@echo Benchmarking
 	@go test -bench .
-	@cd ./stores/in-memory; go test -bench .; cd ../..
+	@cd ./stores/memory; go test -bench .; cd ../..
 	@cd ./stores/mongo; go test -bench .; cd ../..
 
 examples:

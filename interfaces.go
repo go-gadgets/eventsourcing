@@ -116,5 +116,22 @@ type EventStoreWithMiddleware interface {
 	HandleRefresh(middleware RefreshMiddleware)
 }
 
+// EventPublisher is an interface that describes an event publisher sink that
+// allows events to be distributed to other components.
+type EventPublisher interface {
+	// Publish an event. When the method returns the event should be comitted/guaranteed
+	// to have been distributed.
+	Publish(key string, sequence int64, event Event) error
+}
+
+// PublishedEvent is a record of an event that's published to a queue or sink
+type PublishedEvent struct {
+	Domain   string      `json:"domain"`     // Domain the event belong sto
+	Type     EventType   `json:"event_type"` // EventType
+	Key      string      `json:"key"`        // Event key
+	Sequence int64       `json:"sequence"`   // Sequence number
+	Data     interface{} `json:"data"`       // Data
+}
+
 // StateFetchFunc is a function that returns the state-value.
 type StateFetchFunc func() interface{}

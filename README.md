@@ -190,7 +190,8 @@ The challenges are that document-databases for storing events either have one of
   - Nothing stops you writing a Mongo-store variant that implements this pattern here. 
 - Non-Transactionality of the bus (i.e. Even though it got into MongoDB, did it get published/acted on elsewhere?)
 
-For this reason I've explicitly decided to _not_ deal with the event-bus as a concept in the framework, instead recommending:
+If you can __accept__ these shortcomings, there is a `publisher` middleware that allows
+a distribution publisher to be attached to the event storage process. However, for applications where transactional integrity is paramount it is recommended that you:
 
 - Use your event-stores native back-end to propegate events to subscribers via an intermediary.  
   - __Mongo__ - Tail the oplog on your database into Kafka.

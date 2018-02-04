@@ -3,9 +3,11 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gadgets/eventsourcing"
+	"github.com/go-gadgets/eventsourcing/distribution/kafka"
 	"github.com/go-gadgets/eventsourcing/stores/middleware/logging"
 	"github.com/go-gadgets/eventsourcing/stores/middleware/memorysnap"
 	"github.com/go-gadgets/eventsourcing/stores/middleware/mongosnap"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/publish"
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
 	"github.com/sirupsen/logrus"
 )
@@ -24,8 +26,16 @@ func main() {
 		panic(errStore)
 	}
 
-	// Use a middleware wrapper, add snapshot supprot and logging
 	store := eventsourcing.NewMiddlewareWrapper(mongoStore)
+
+	// Post-publish to Kafka
+	pub, errPublisher := kafka.CreatePublisher([]string{"localhost:9092"}, "events", registry)
+	if errPublisher != nil {
+		panic(errPublisher)
+	}
+	store.Use(publish.Create(pub))
+
+	// Snapshotting to MongoDB
 	mongoSnap, errSnap := mongosnap.Create(mongosnap.Parameters{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
@@ -36,10 +46,14 @@ func main() {
 		panic(errSnap)
 	}
 	store.Use(mongoSnap())
+
+	// Create a lazy in-memory snapshot
 	store.Use(memorysnap.Create(memorysnap.Parameters{
 		Lazy:         true,
 		SnapInterval: 1,
 	}))
+
+	// Logging
 	store.Use(logging.Create())
 
 	r := gin.Default()
