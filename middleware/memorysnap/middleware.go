@@ -1,6 +1,7 @@
 package memorysnap
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 // Create provisions a new instance of the memory-snap provider.
 func Create(params Parameters) (eventsourcing.CommitMiddleware, eventsourcing.RefreshMiddleware, func() error) {
 	snaps := &snapStorage{
+		lazy:         params.Lazy,
 		snapInterval: params.SnapInterval,
 		snaps:        make(map[string]snapshot),
 	}
@@ -29,24 +31,37 @@ type snapshot struct {
 // snapStorage is our storage provider for managing snapshots in memory
 type snapStorage struct {
 	snapInterval int64
+	lazy         bool
 	snaps        map[string]snapshot
 	mutex        sync.Mutex
 }
 
 // Parameters describes the parameters that can be used to configure the snap store.
 type Parameters struct {
+	Lazy         bool  // Lazy snapshots (won't refresh if there's a cached copy in RAM)
 	SnapInterval int64 `json:"snap_interval"` // SnapInterval is the number of events between snaps
 }
 
 // CommitEvents stores any events for the specified aggregate that are uncommitted
 // at this point in time.
 func (store *snapStorage) commit(writer eventsourcing.StoreWriterAdapter, next eventsourcing.NextHandler) error {
+	// Store the inner provider first.
+	errInner := next()
+
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 
-	// Store the inner provider first.
-	errInner := next()
 	if errInner != nil {
+		// If we're a lazy commit, then clean the cache on a fault
+		fault, _ := eventsourcing.IsConcurrencyFault(errInner)
+		if fault && store.lazy {
+			key := writer.GetKey()
+			_, cached := store.snaps[key]
+			if cached { // Purge the changed value
+				delete(store.snaps, key)
+			}
+		}
+
 		return errInner
 	}
 
@@ -54,15 +69,27 @@ func (store *snapStorage) commit(writer eventsourcing.StoreWriterAdapter, next e
 	currentSequenceNumber, events := writer.GetUncomittedEvents()
 	eventCount := int64(len(events))
 	nextSnap := currentSequenceNumber - (currentSequenceNumber % store.snapInterval) + store.snapInterval
-	writeSnap := currentSequenceNumber+eventCount >= nextSnap
+	writeSnap := store.lazy || currentSequenceNumber+eventCount >= nextSnap
+	if !writeSnap {
+		return nil
+	}
 
 	// Finally, write the snap if needed
 	key := writer.GetKey()
-	if writeSnap == true {
-		store.snaps[key] = snapshot{
-			Sequence: currentSequenceNumber + eventCount,
-			State:    writer.GetState(),
-		}
+
+	snapped, errMarshal := json.Marshal(writer.GetState())
+	if errMarshal != nil {
+		return errMarshal
+	}
+	cloned := make(map[string]interface{})
+	errClone := json.Unmarshal(snapped, &cloned)
+	if errClone != nil {
+		return errClone
+	}
+
+	store.snaps[key] = snapshot{
+		Sequence: currentSequenceNumber + eventCount,
+		State:    cloned,
 	}
 
 	return nil
@@ -84,6 +111,11 @@ func (store *snapStorage) refresh(adapter eventsourcing.StoreLoaderAdapter, next
 	if found {
 		errSnap := adapter.RestoreSnapshot(snap.Sequence, snap.State)
 		if errSnap != nil {
+			return nil
+		}
+
+		// If we're lazy, then don't call the rest of the refresh
+		if store.lazy {
 			return nil
 		}
 	}
