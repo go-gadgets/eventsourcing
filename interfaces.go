@@ -98,5 +98,23 @@ type EventStore interface {
 	Close() error
 }
 
+// EventStoreWithMiddleware is an interface that describes an event-store with middleware
+// support.
+type EventStoreWithMiddleware interface {
+	EventStore
+
+	// Use a middleware
+	Use(commit CommitMiddleware, refresh RefreshMiddleware, cleanup func() error)
+
+	// HandleCleanup registers a cleanup/shutdown handler
+	HandleCleanup(cleanup func() error)
+
+	// HandleCommit registers middleware to handle commits
+	HandleCommit(middleware CommitMiddleware)
+
+	// HandleRefresh registers middleware to handle refreshes
+	HandleRefresh(middleware RefreshMiddleware)
+}
+
 // StateFetchFunc is a function that returns the state-value.
 type StateFetchFunc func() interface{}

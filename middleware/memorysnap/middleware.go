@@ -7,20 +7,28 @@ import (
 	"github.com/go-gadgets/eventsourcing"
 )
 
-// Snapshot is the current snapshot for an entity, a JSON structure
-// that can be persisted to the Mongo instance.
-type snapshot struct {
-	Sequence int64       `json:"sequence"`
-	State    interface{} `json:"aggregate_state"`
+// Create provisions a new instance of the memory-snap provider.
+func Create(params Parameters) (eventsourcing.CommitMiddleware, eventsourcing.RefreshMiddleware, func() error) {
+	snaps := &snapStorage{
+		snapInterval: params.SnapInterval,
+		snaps:        make(map[string]snapshot),
+	}
+
+	return snaps.commit, snaps.refresh, func() error {
+		snaps.snaps = nil
+		return nil
+	}
 }
 
-// snapStore is a type that represents a MongoDB backed
-// EventStore wrapper that snapshots an aggregate at intervals
-// to reduce event replay costs. This type is private to prevent
-// people playing with the internals.
-type snapStore struct {
+// Snapshot is the current snapshot for an entity
+type snapshot struct {
+	Sequence int64
+	State    interface{}
+}
+
+// snapStorage is our storage provider for managing snapshots in memory
+type snapStorage struct {
 	snapInterval int64
-	eventStore   eventsourcing.EventStore
 	snaps        map[string]snapshot
 	mutex        sync.Mutex
 }
@@ -30,30 +38,14 @@ type Parameters struct {
 	SnapInterval int64 `json:"snap_interval"` // SnapInterval is the number of events between snaps
 }
 
-// NewStore creates a a new instance of the MongoDB backed snapshot provider,
-// which provides aggregate replay acceleration for long-lived entities.
-func NewStore(params Parameters, wrapped eventsourcing.EventStore) eventsourcing.EventStore {
-	return &snapStore{
-		eventStore:   wrapped,
-		snapInterval: params.SnapInterval,
-		snaps:        make(map[string]snapshot),
-	}
-}
-
-// Close the event-store driver
-func (store *snapStore) Close() error {
-	store.snaps = nil
-	return nil
-}
-
 // CommitEvents stores any events for the specified aggregate that are uncommitted
 // at this point in time.
-func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
+func (store *snapStorage) commit(writer eventsourcing.StoreWriterAdapter, next eventsourcing.NextHandler) error {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 
 	// Store the inner provider first.
-	errInner := store.eventStore.CommitEvents(writer)
+	errInner := next()
 	if errInner != nil {
 		return errInner
 	}
@@ -76,8 +68,8 @@ func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) er
 	return nil
 }
 
-// Refresh the state of an aggregate from the store.
-func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
+// refresh the state of an aggregate from the store.
+func (store *snapStorage) refresh(adapter eventsourcing.StoreLoaderAdapter, next eventsourcing.NextHandler) error {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 
@@ -98,5 +90,5 @@ func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error 
 
 	// Now we can run the inner adapters refresh, andload in any
 	// subsequent events that are not part of the snap.
-	return store.eventStore.Refresh(adapter)
+	return next()
 }

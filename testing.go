@@ -4,6 +4,23 @@ import (
 	"fmt"
 )
 
+// TestStoreFilter is a callback that decides whether or not to fail the next
+// operation with an error
+type TestStoreFilter func() error
+
+// DefaultTestStoreFilter is an error filter that doesn't fail, which is the default.
+func DefaultTestStoreFilter() error {
+	return nil
+}
+
+// TestStoreFailureFilter is an error filter that is used to ensure a store fails
+// in the prescribed way.
+func TestStoreFailureFilter(err error) TestStoreFilter {
+	return func() error {
+		return err
+	}
+}
+
 // NewTestStore creates a new EventStore instance that uses the Mock provider. This
 // allows us to track and observe actions, and can be used to validate the correctness
 // of other implementations or actions in unit tests.
@@ -12,8 +29,9 @@ func NewTestStore() *TestStore {
 	// converson failure if the Store interface ever breaks.
 	var store EventStore
 	store = &TestStore{
-		History: make([]TestStoreHistoryItem, 0),
-		whens:   make(map[string]whenState),
+		History:     make([]TestStoreHistoryItem, 0),
+		whens:       make(map[string]whenState),
+		ErrorFilter: DefaultTestStoreFilter,
 	}
 
 	return store.(*TestStore)
@@ -21,8 +39,9 @@ func NewTestStore() *TestStore {
 
 // TestStore is our mock-store type
 type TestStore struct {
-	History []TestStoreHistoryItem
-	whens   map[string]whenState
+	History     []TestStoreHistoryItem
+	ErrorFilter func() error
+	whens       map[string]whenState
 }
 
 // TestStoreHistoryItem is the set of history items recorded by an event store.

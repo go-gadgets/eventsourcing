@@ -3,15 +3,18 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gadgets/eventsourcing"
+	"github.com/go-gadgets/eventsourcing/middleware/logging"
+	"github.com/go-gadgets/eventsourcing/middleware/mongosnap"
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
-	"github.com/go-gadgets/eventsourcing/stores/mongosnap"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
+	logrus.SetLevel(logrus.DebugLevel)
 
 	// Initialze the event store
-	store, errStore := mongo.NewStore(mongo.StoreParameters{
+	mongoStore, errStore := mongo.NewStore(mongo.StoreParameters{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
 		CollectionName: "Counters",
@@ -20,16 +23,19 @@ func main() {
 		panic(errStore)
 	}
 
-	// Wrap the event store in a snapshot wrapper
-	store, errSnap := mongosnap.NewStore(mongosnap.Parameters{
+	// Use a middleware wrapper, add snapshot supprot and logging
+	store := eventsourcing.NewMiddlewareWrapper(mongoStore)
+	mongoSnap, errSnap := mongosnap.Create(mongosnap.Parameters{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
 		CollectionName: "Counters-Snapshot",
 		SnapInterval:   10,
-	}, store)
+	})
 	if errSnap != nil {
 		panic(errSnap)
 	}
+	store.Use(mongoSnap())
+	store.Use(logging.Create())
 
 	r := gin.Default()
 	r.GET("/:name/increment", func(c *gin.Context) {

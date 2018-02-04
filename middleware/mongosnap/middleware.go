@@ -6,10 +6,39 @@ import (
 	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
 
+func init() {
+	bson.SetJSONFallback(true)
+}
+
+// Create the middleware instance
+func Create(parameters Parameters) (func() (eventsourcing.CommitMiddleware, eventsourcing.RefreshMiddleware, func() error), error) {
+	// Connect to the MongoDB services
+	session, errSession := mgo.Dial(parameters.DialURL)
+	if errSession != nil {
+		return nil, errSession
+	}
+
+	database := session.DB(parameters.DatabaseName)
+	collection := database.C(parameters.CollectionName)
+
+	snapper := &snapStore{
+		session:      session,
+		database:     database,
+		collection:   collection,
+		snapInterval: parameters.SnapInterval,
+	}
+
+	return func() (eventsourcing.CommitMiddleware, eventsourcing.RefreshMiddleware, func() error) {
+		return snapper.commit, snapper.refresh, func() error {
+			snapper.session.Close()
+			return nil
+		}
+	}, nil
+}
+
 // Snapshot is the current snapshot for an entity, a JSON structure
 // that can be persisted to the Mongo instance.
 type snapshot struct {
-	Key      string      `json:"_id"`
 	Sequence int64       `json:"sequence"`
 	State    interface{} `json:"state"`
 }
@@ -23,7 +52,6 @@ type snapStore struct {
 	database     *mgo.Database
 	collection   *mgo.Collection
 	snapInterval int64
-	eventStore   eventsourcing.EventStore
 }
 
 // Parameters describes the parameters that can be
@@ -35,47 +63,11 @@ type Parameters struct {
 	SnapInterval   int64  `json:"snap_interval"`   // SnapInterval is the number of events between snaps
 }
 
-// NewStore creates a a new instance of the MongoDB backed snapshot provider,
-// which provides aggregate replay acceleration for long-lived entities.
-func NewStore(params Parameters, wrapped eventsourcing.EventStore) (eventsourcing.EventStore, error) {
-	// Connect to the MongoDB services
-	session, errSession := mgo.Dial(params.DialURL)
-	if errSession != nil {
-		return nil, errSession
-	}
-
-	database := session.DB(params.DatabaseName)
-	collection := database.C(params.CollectionName)
-	errIndex := collection.EnsureIndex(mgo.Index{
-		Key:        []string{"key"},
-		Unique:     true,
-		DropDups:   false,
-		Background: false,
-	})
-	if errIndex != nil {
-		session.Close()
-		return nil, errIndex
-	}
-
-	return &snapStore{
-		session:      session,
-		database:     database,
-		collection:   collection,
-		eventStore:   wrapped,
-		snapInterval: params.SnapInterval,
-	}, nil
-}
-
-// Close the snap-store
-func (store *snapStore) Close() error {
-	return nil
-}
-
-// CommitEvents stores any events for the specified aggregate that are uncommitted
+// commit stores any events for the specified aggregate that are uncommitted
 // at this point in time.
-func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
+func (store *snapStore) commit(writer eventsourcing.StoreWriterAdapter, next eventsourcing.NextHandler) error {
 	// Store the inner provider first.
-	errInner := store.eventStore.CommitEvents(writer)
+	errInner := next()
 	if errInner != nil {
 		return errInner
 	}
@@ -92,7 +84,6 @@ func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) er
 	// Finally, write the snap if needed
 	key := writer.GetKey()
 	_, errSnap := store.collection.UpsertId(key, snapshot{
-		Key:      key,
 		Sequence: currentSequenceNumber + eventCount,
 		State:    writer.GetState(),
 	})
@@ -101,7 +92,7 @@ func (store *snapStore) CommitEvents(writer eventsourcing.StoreWriterAdapter) er
 }
 
 // Refresh the state of an aggregate from the store.
-func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error {
+func (store *snapStore) refresh(adapter eventsourcing.StoreLoaderAdapter, next eventsourcing.NextHandler) error {
 	key := adapter.GetKey()
 
 	// Only run the the snapshot fetch if an outer-driver has not already refreshed
@@ -132,5 +123,5 @@ func (store *snapStore) Refresh(adapter eventsourcing.StoreLoaderAdapter) error 
 
 	// Now we can run the inner adapters refresh, andload in any
 	// subsequent events that are not part of the snap.
-	return store.eventStore.Refresh(adapter)
+	return next()
 }

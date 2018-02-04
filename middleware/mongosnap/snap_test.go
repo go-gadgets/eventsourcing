@@ -1,27 +1,43 @@
-package memorysnap
+package mongosnap
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/stores/memory"
 	"github.com/go-gadgets/eventsourcing/utilities/test"
+	uuid "github.com/satori/go.uuid"
 )
 
 func provider() (eventsourcing.EventStore, func(), error) {
+	collectionName := fmt.Sprintf("%s", uuid.NewV4())
+	dial := os.Getenv("MONGO_TEST_HOST")
+	if dial == "" {
+		dial = "mongodb://localhost:27017"
+	}
+
 	base := memory.NewStore()
+	wrapped := eventsourcing.NewMiddlewareWrapper(base)
+	mw, err := Create(Parameters{
+		DialURL:        dial,
+		DatabaseName:   "TestDatabase",
+		CollectionName: collectionName,
+		SnapInterval:   5,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	wrapped.Use(mw())
 
-	result := NewStore(Parameters{
-		SnapInterval: 5,
-	}, base)
-
-	return result, func() {
+	return wrapped, func() {
 	}, nil
 }
 
 // TestStoreCompliance
 func TestStoreCompliance(t *testing.T) {
-	test.CheckStandardSuite(t, "In-Memory Snap-Store", provider)
+	test.CheckStandardSuite(t, "MongoDB Snap Middleware", provider)
 }
 
 // BenchmarkIndividualCommmits tests how fast we can apply events to an aggregate
