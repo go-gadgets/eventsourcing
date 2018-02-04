@@ -40,6 +40,15 @@ func NewStore(params StoreParameters) (eventsourcing.EventStore, error) {
 
 	database := session.DB(params.DatabaseName)
 	collection := database.C(params.CollectionName)
+
+	return NewStoreWithConnection(session, collection)
+}
+
+// NewStoreWithConnection creates a new MGO-backed store with a specific session
+// and collection. The collection is used to store the records, the session is used
+// to clean up afterward.
+func NewStoreWithConnection(session *mgo.Session, collection *mgo.Collection) (eventsourcing.EventStore, error) {
+	// Ensure the index exists
 	errIndex := collection.EnsureIndex(mgo.Index{
 		Key:        []string{"key", "sequence"},
 		Unique:     true,
@@ -53,7 +62,6 @@ func NewStore(params StoreParameters) (eventsourcing.EventStore, error) {
 
 	engine := &mongoDBEventStore{
 		session:    session,
-		database:   database,
 		collection: collection,
 	}
 
