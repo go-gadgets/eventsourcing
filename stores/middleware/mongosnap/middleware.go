@@ -2,7 +2,7 @@ package mongosnap
 
 import (
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/go-gadgets/eventsourcing/middleware/snapbase"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/snapbase"
 	mgo "github.com/steve-gray/mgo-eventsourcing"
 	"github.com/steve-gray/mgo-eventsourcing/bson"
 )

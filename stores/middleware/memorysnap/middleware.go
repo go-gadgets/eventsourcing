@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/go-gadgets/eventsourcing/middleware/snapbase"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/snapbase"
 )
 
 // Parameters describes the parameters that can be used to configure the snap store.

@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/go-gadgets/eventsourcing/middleware/logging"
-	"github.com/go-gadgets/eventsourcing/middleware/memorysnap"
-	"github.com/go-gadgets/eventsourcing/middleware/mongosnap"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/logging"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/memorysnap"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/mongosnap"
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
 	"github.com/sirupsen/logrus"
 )
