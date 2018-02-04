@@ -19,7 +19,7 @@ func provider() (eventsourcing.EventStore, func(), error) {
 
 // TestStoreCompliance
 func TestStoreCompliance(t *testing.T) {
-	test.CheckStandardSuite(t, "In-Memory Snap Middleware", provider)
+	test.CheckStandardSuite(t, "Logging Middleware", provider)
 }
 
 // BenchmarkIndividualCommmits tests how fast we can apply events to an aggregate
