@@ -16,13 +16,20 @@ type publisher struct {
 	registry eventsourcing.EventRegistry // Registry
 }
 
-// CreatePublisher creates a new kafka publisher
+// CreatePublisher creates a new kafka publisher from a set of hosts, using the default
+// publisher settings.
 func CreatePublisher(brokers []string, topic string, registry eventsourcing.EventRegistry) (eventsourcing.EventPublisher, error) {
 	prod, errProd := sarama.NewSyncProducer(brokers, nil)
 	if errProd != nil {
 		return nil, errProd
 	}
 
+	return CreatePublisherWithProducer(prod, topic, registry)
+}
+
+// CreatePublisherWithProducer creates a publisher with a producer that's already been established
+// (BYO-instance)
+func CreatePublisherWithProducer(prod sarama.SyncProducer, topic string, registry eventsourcing.EventRegistry) (eventsourcing.EventPublisher, error) {
 	return &publisher{
 		prod:     prod,
 		topic:    topic,
