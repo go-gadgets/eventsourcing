@@ -19,6 +19,9 @@ type publisher struct {
 // CreatePublisher creates a new kafka publisher from a set of hosts, using the default
 // publisher settings.
 func CreatePublisher(brokers []string, topic string, registry eventsourcing.EventRegistry) (eventsourcing.EventPublisher, error) {
+	config := sarama.Config{}
+	config.Producer.Partitioner = sarama.NewHashPartitioner
+
 	prod, errProd := sarama.NewSyncProducer(brokers, nil)
 	if errProd != nil {
 		return nil, errProd
@@ -60,6 +63,7 @@ func (pub *publisher) Publish(key string, sequence int64, event eventsourcing.Ev
 
 	msg := &sarama.ProducerMessage{
 		Topic: pub.topic,
+		Key:   sarama.StringEncoder(key),
 		Value: sarama.ByteEncoder(buff),
 	}
 
