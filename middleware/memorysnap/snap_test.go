@@ -16,6 +16,7 @@ func provider() (eventsourcing.EventStore, func(), error) {
 	}))
 
 	return wrapped, func() {
+		wrapped.Close()
 	}, nil
 }
 

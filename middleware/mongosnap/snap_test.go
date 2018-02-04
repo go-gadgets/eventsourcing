@@ -32,6 +32,7 @@ func provider() (eventsourcing.EventStore, func(), error) {
 	wrapped.Use(mw())
 
 	return wrapped, func() {
+		wrapped.Close()
 	}, nil
 }
 
