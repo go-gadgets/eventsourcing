@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/middleware/logging"
+	"github.com/go-gadgets/eventsourcing/middleware/memorysnap"
 	"github.com/go-gadgets/eventsourcing/middleware/mongosnap"
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
 	"github.com/sirupsen/logrus"
@@ -35,6 +36,10 @@ func main() {
 		panic(errSnap)
 	}
 	store.Use(mongoSnap())
+	store.Use(memorysnap.Create(memorysnap.Parameters{
+		Lazy:         true,
+		SnapInterval: 1,
+	}))
 	store.Use(logging.Create())
 
 	r := gin.Default()
@@ -68,21 +73,27 @@ func main() {
 
 	r.POST("/:name/increment", func(c *gin.Context) {
 		name := c.Param("name")
-		agg := CounterAggregate{}
-		agg.Initialize(name, store, func() interface{} { return &agg })
 
-		errCommand := agg.Handle(IncrementCommand{})
+		errCommand := eventsourcing.Retry(10, func() error {
+			agg := CounterAggregate{}
+			agg.Initialize(name, store, func() interface{} { return &agg })
+
+			err := agg.Handle(IncrementCommand{})
+			if err != nil {
+				return err
+			}
+
+			// Show the count
+			c.JSON(200, gin.H{
+				"count": agg.Count,
+			})
+			return nil
+		})
 
 		if errCommand != nil {
 			c.JSON(500, errCommand.Error())
 			return
 		}
-
-		// Show the count
-		c.JSON(200, gin.H{
-			"count": agg.Count,
-		})
-
 	})
 
 	r.Run() // listen and serve on 0.0.0.0:8080
