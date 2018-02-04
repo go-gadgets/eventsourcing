@@ -12,6 +12,12 @@ type CommitMiddleware func(writer StoreWriterAdapter, next NextHandler) error
 // for interception or other operations
 type RefreshMiddleware func(reader StoreLoaderAdapter, next NextHandler) error
 
+// CloseMiddleware shuts down a middleware, if present
+type CloseMiddleware func() error
+
+// MiddlewareFactory is a middleware callback that provides all 3 items.
+type MiddlewareFactory func() (CommitMiddleware, RefreshMiddleware, CloseMiddleware)
+
 // wrapper is our wrapper type that creates a middleware enabled-store
 type wrapper struct {
 	commit  []CommitMiddleware  // Commit middlewares
