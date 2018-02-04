@@ -23,11 +23,10 @@ The features of this framework are:
 - Pluggable event-store engines:
   - MongoDB 
   - In-Memory
-- Middleware support
-	- Ability to mutate store/load operations with custom functions for any store
-  - Included middleware:
-	  - Snapshotting (MongoDB, In-Memory)
-		- Logging (with Logrus)
+  - Middleware support
+	  - Ability to mutate store/load operations with custom functions for any store
+    - Snapshotting (MongoDB, In-Memory)
+    - Logging (with Logrus)
 - Quick-Start helper types:
   - The AggregateBase type allows for fast creation of aggregates and uses reflection in order to wire-up event replay methods.
 - Simple structure annotations:
