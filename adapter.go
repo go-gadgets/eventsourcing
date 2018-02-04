@@ -45,10 +45,10 @@ type StoreLoaderAdapter interface {
 type StoreWriterAdapter interface {
 	AdapterWithEvents
 
-	// GetUncomittedEvent gets the committed sequence number, and any
+	// GetUncommittedEvents gets the committed sequence number, and any
 	// events that have been added since hte last commit. This can been
 	// used by a backing store to write data.
-	GetUncomittedEvents() (int64, []Event)
+	GetUncommittedEvents() (int64, []Event)
 
 	// GetState returns the state of the aggregate in it's current
 	// sequence/position, which may be required when snapshotting.

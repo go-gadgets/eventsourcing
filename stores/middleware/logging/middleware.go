@@ -10,7 +10,7 @@ import (
 func Create() (eventsourcing.CommitMiddleware, eventsourcing.RefreshMiddleware, func() error) {
 	call := 0
 	return func(writer eventsourcing.StoreWriterAdapter, next eventsourcing.NextHandler) error {
-			count, _ := writer.GetUncomittedEvents()
+			count, _ := writer.GetUncommittedEvents()
 			logger := logrus.WithFields(logrus.Fields{
 				"key":    writer.GetKey(),
 				"seq":    writer.SequenceNumber(),

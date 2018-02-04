@@ -72,7 +72,7 @@ func (store *store) Close() error {
 func (store *store) CommitEvents(writer eventsourcing.StoreWriterAdapter) error {
 	key := writer.GetKey()
 	registry := writer.GetEventRegistry()
-	currentSequenceNumber, events := writer.GetUncomittedEvents()
+	currentSequenceNumber, events := writer.GetUncommittedEvents()
 
 	// If we're writing beyond zero, we need to check that there's priors.
 	if currentSequenceNumber > 0 {

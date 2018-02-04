@@ -75,7 +75,7 @@ func (store *TestStore) Close() error {
 
 // CommitEvents stores the events
 func (store *TestStore) CommitEvents(writer StoreWriterAdapter) error {
-	seq, evt := writer.GetUncomittedEvents()
+	seq, evt := writer.GetUncommittedEvents()
 
 	store.History = append(store.History, TestStoreHistoryItem{
 		Key:    writer.GetKey(),

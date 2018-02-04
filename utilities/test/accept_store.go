@@ -160,10 +160,10 @@ func CheckConcurrencyValidation(t *testing.T, provider StoreProvider) {
 func CheckWritePastEnd(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
 		writer := &fakeStoreWriter{
-			key:              "dummy-key",
-			eventRegistry:    GetTestRegistry(),
-			uncomittedOrigin: 3,
-			uncomittedEvents: []eventsourcing.Event{
+			key:               "dummy-key",
+			eventRegistry:     GetTestRegistry(),
+			uncommittedOrigin: 3,
+			uncommittedEvents: []eventsourcing.Event{
 				IncrementEvent{},
 			},
 		}
@@ -288,10 +288,10 @@ func MeasureBulkInsertAndReload(b *testing.B, provider StoreProvider) {
 }
 
 type fakeStoreWriter struct {
-	key              string
-	eventRegistry    eventsourcing.EventRegistry
-	uncomittedOrigin int64
-	uncomittedEvents []eventsourcing.Event
+	key               string
+	eventRegistry     eventsourcing.EventRegistry
+	uncommittedOrigin int64
+	uncommittedEvents []eventsourcing.Event
 }
 
 // GetKey gets the key of the aggregate being stored
@@ -304,19 +304,19 @@ func (instance *fakeStoreWriter) GetEventRegistry() eventsourcing.EventRegistry 
 	return instance.eventRegistry
 }
 
-// GetUncomittedEvents gets the events that are uncomittedEvents for this aggregate.
-func (instance *fakeStoreWriter) GetUncomittedEvents() (int64, []eventsourcing.Event) {
-	return instance.uncomittedOrigin, instance.uncomittedEvents
+// GetUncommittedEvents gets the events that are uncommittedEvents for this aggregate.
+func (instance *fakeStoreWriter) GetUncommittedEvents() (int64, []eventsourcing.Event) {
+	return instance.uncommittedOrigin, instance.uncommittedEvents
 }
 
 // IsDirty is reture if there's an uncommitted event
 func (instance *fakeStoreWriter) IsDirty() bool {
-	return len(instance.uncomittedEvents) > 0
+	return len(instance.uncommittedEvents) > 0
 }
 
 // SequenceNumber fetches the current sequence number
 func (instance *fakeStoreWriter) SequenceNumber() int64 {
-	return instance.uncomittedOrigin + int64(len(instance.uncomittedEvents))
+	return instance.uncommittedOrigin + int64(len(instance.uncommittedEvents))
 }
 
 // GetState returns an empty state map

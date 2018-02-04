@@ -9,7 +9,7 @@ func Create(publisher eventsourcing.EventPublisher) (eventsourcing.CommitMiddlew
 	return func(writer eventsourcing.StoreWriterAdapter, next eventsourcing.NextHandler) error {
 			// Get the events we're about to publish
 			key := writer.GetKey()
-			seq, events := writer.GetUncomittedEvents()
+			seq, events := writer.GetUncommittedEvents()
 
 			// Run the upstream, and abort if we don't succeed.
 			errNext := next()

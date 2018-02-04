@@ -40,7 +40,7 @@ func CreatePublisherWithProducer(prod sarama.SyncProducer, topic string, registr
 	}, nil
 }
 
-// Publish an event. When the method returns the event should be comitted/guaranteed
+// Publish an event. When the method returns the event should be committed/guaranteed
 // to have been distributed.
 func (pub *publisher) Publish(key string, sequence int64, event eventsourcing.Event) error {
 	eventType, found := pub.registry.GetEventType(event)

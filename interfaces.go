@@ -119,7 +119,7 @@ type EventStoreWithMiddleware interface {
 // EventPublisher is an interface that describes an event publisher sink that
 // allows events to be distributed to other components.
 type EventPublisher interface {
-	// Publish an event. When the method returns the event should be comitted/guaranteed
+	// Publish an event. When the method returns the event should be committed/guaranteed
 	// to have been distributed.
 	Publish(key string, sequence int64, event Event) error
 }

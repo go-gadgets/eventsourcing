@@ -46,9 +46,9 @@ type AggregateBase struct {
 	// to persist and load our events
 	eventStore EventStore
 
-	// uncomittedEvents are events that have not been put into
+	// uncommittedEvents are events that have not been put into
 	// a backing store yet.
-	uncomittedEvents []Event
+	uncommittedEvents []Event
 
 	// stateFunc is a function reference that loads the state of an object.
 	// This is required because we generally only have a reference to the
@@ -66,7 +66,7 @@ func (agg *AggregateBase) Initialize(key string, registry EventRegistry, store E
 	agg.eventReplay = make(map[EventType]func(Event))
 	agg.commandHandlers = make(map[CommandType]CommandHandleFunc)
 	agg.eventStore = store
-	agg.uncomittedEvents = make([]Event, 0)
+	agg.uncommittedEvents = make([]Event, 0)
 	agg.stateFunc = state
 }
 
@@ -133,7 +133,7 @@ func (agg *AggregateBase) AutomaticWireup(subject interface{}) {
 // ignored, and all event application should be fail-safe.
 func (agg *AggregateBase) ApplyEvent(event Event) {
 	agg.applyEventInternal(event)
-	agg.uncomittedEvents = append(agg.uncomittedEvents, event)
+	agg.uncommittedEvents = append(agg.uncommittedEvents, event)
 }
 
 // applyEventInternal applies an event internally
@@ -200,8 +200,8 @@ func (agg *AggregateBase) Commit() error {
 		return err
 	}
 
-	// Clear the uncomittedEvents array
-	agg.uncomittedEvents = make([]Event, 0)
+	// Clear the uncommittedEvents array
+	agg.uncommittedEvents = make([]Event, 0)
 	agg.committedSequenceNumber = agg.sequenceNumber
 	return nil
 }
@@ -214,7 +214,7 @@ func (agg *AggregateBase) getEventRegistry() EventRegistry {
 
 // isDirty returns true if the aggregate has uncommitted events, false otherwise.
 func (agg *AggregateBase) isDirty() bool {
-	return len(agg.uncomittedEvents) > 0
+	return len(agg.uncommittedEvents) > 0
 }
 
 // buildHandleMappings builds a set of command handler mappings for a type that has
@@ -386,9 +386,9 @@ func (adapter *aggregateBaseStoreAdapter) GetEventRegistry() EventRegistry {
 	return adapter.aggregate.getEventRegistry()
 }
 
-// GetUncomittedEvents fetches the uncommitted events of this aggregate
-func (adapter *aggregateBaseStoreAdapter) GetUncomittedEvents() (int64, []Event) {
-	return adapter.aggregate.committedSequenceNumber, adapter.aggregate.uncomittedEvents
+// GetUncommittedEvents fetches the uncommitted events of this aggregate
+func (adapter *aggregateBaseStoreAdapter) GetUncommittedEvents() (int64, []Event) {
+	return adapter.aggregate.committedSequenceNumber, adapter.aggregate.uncommittedEvents
 }
 
 // GetState returns the aggregate state for serialization.

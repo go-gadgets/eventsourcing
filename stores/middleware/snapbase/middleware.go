@@ -69,7 +69,7 @@ func (mw *middleware) commit(writer eventsourcing.StoreWriterAdapter, next event
 	}
 
 	// Snap time?
-	currentSequenceNumber, events := writer.GetUncomittedEvents()
+	currentSequenceNumber, events := writer.GetUncommittedEvents()
 	eventCount := int64(len(events))
 	nextSnap := currentSequenceNumber - (currentSequenceNumber % mw.params.SnapInterval) + mw.params.SnapInterval
 	writeSnap := mw.params.Lazy || currentSequenceNumber+eventCount >= nextSnap
