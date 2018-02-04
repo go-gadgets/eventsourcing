@@ -18,38 +18,46 @@ type snapshot struct {
 	State    interface{} `json:"state"`
 }
 
-// Parameters describes the parameters that can be
-// used to cofigure a MongoDB snap store.
-type Parameters struct {
+// Endpoint configuration
+type Endpoint struct {
 	DialURL        string `json:"dial_url"`        // DialURL is the mgo URL to use when connecting to the cluster
 	DatabaseName   string `json:"database_name"`   // DatabaseName is the database to create/connect to.
 	CollectionName string `json:"collection_name"` // CollectionName is the collection name to put new documents in to
-	Lazy           bool   // Lazy mode?
-	SnapInterval   int64  `json:"snap_interval"` // SnapInterval is the number of events between snaps
+}
+
+// Parameters describes the parameters that can be
+// used to cofigure a MongoDB snap store.
+type Parameters struct {
+	Lazy         bool  // Lazy mode?
+	SnapInterval int64 `json:"snap_interval"` // SnapInterval is the number of events between snaps
 }
 
 // instance is our storage provider for managing snapshots in memory
 type instance struct {
 	session    *mgo.Session
-	database   *mgo.Database
 	collection *mgo.Collection
 	params     Parameters
 }
 
 // Create provisions a new instance of the memory-snap provider.
-func Create(params Parameters) (eventsourcing.MiddlewareFactory, error) {
+func Create(params Parameters, endpoint Endpoint) (eventsourcing.MiddlewareFactory, error) {
 	// Connect to the MongoDB services
-	session, errSession := mgo.Dial(params.DialURL)
+	session, errSession := mgo.Dial(endpoint.DialURL)
 	if errSession != nil {
 		return nil, errSession
 	}
 
-	database := session.DB(params.DatabaseName)
-	collection := database.C(params.CollectionName)
+	database := session.DB(endpoint.DatabaseName)
+	collection := database.C(endpoint.CollectionName)
 
+	return CreateWithConnection(params, session, collection), nil
+}
+
+// CreateWithConnection provisions a new instance of the memory-snap provider using
+// an existing connection and session
+func CreateWithConnection(params Parameters, session *mgo.Session, collection *mgo.Collection) eventsourcing.MiddlewareFactory {
 	snaps := &instance{
 		session:    session,
-		database:   database,
 		collection: collection,
 		params:     params,
 	}
@@ -66,7 +74,7 @@ func Create(params Parameters) (eventsourcing.MiddlewareFactory, error) {
 			Purge: snaps.purge,
 			Put:   snaps.put,
 		})
-	}, nil
+	}
 }
 
 // get a key from the cache

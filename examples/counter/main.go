@@ -17,7 +17,7 @@ func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 
 	// Initialze the event store
-	mongoStore, errStore := mongo.NewStore(mongo.StoreParameters{
+	mongoStore, errStore := mongo.NewStore(mongo.Endpoint{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
 		CollectionName: "Counters",
@@ -37,10 +37,11 @@ func main() {
 
 	// Snapshotting to MongoDB
 	mongoSnap, errSnap := mongosnap.Create(mongosnap.Parameters{
+		SnapInterval: 10,
+	}, mongosnap.Endpoint{
 		DialURL:        "mongodb://mongodb-test:27017",
 		DatabaseName:   "eventsourcingExample",
 		CollectionName: "Counters-Snapshot",
-		SnapInterval:   10,
 	})
 	if errSnap != nil {
 		panic(errSnap)

@@ -21,10 +21,11 @@ func provider() (eventsourcing.EventStore, func(), error) {
 	base := memory.NewStore()
 	wrapped := eventsourcing.NewMiddlewareWrapper(base)
 	mw, err := Create(Parameters{
+		SnapInterval: 5,
+	}, Endpoint{
 		DialURL:        dial,
 		DatabaseName:   "TestDatabase",
 		CollectionName: collectionName,
-		SnapInterval:   5,
 	})
 	if err != nil {
 		return nil, nil, err

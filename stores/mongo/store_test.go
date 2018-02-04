@@ -18,7 +18,7 @@ func provider() (eventsourcing.EventStore, func(), error) {
 		dial = "mongodb://localhost:27017"
 	}
 
-	result, err := NewStore(StoreParameters{
+	result, err := NewStore(Endpoint{
 		DialURL:        dial,
 		DatabaseName:   "TestDatabase",
 		CollectionName: collectionName,

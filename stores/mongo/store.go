@@ -17,13 +17,12 @@ func init() {
 // EventStore implementation
 type mongoDBEventStore struct {
 	session    *mgo.Session
-	database   *mgo.Database
 	collection *mgo.Collection
 }
 
-// StoreParameters are parameters for the MongoDB event store
+// Endpoint are parameters for the MongoDB event store
 // to use when initializing.
-type StoreParameters struct {
+type Endpoint struct {
 	DialURL        string `json:"dial_url"`        // DialURL is the mgo URL to use when connecting to the cluster
 	DatabaseName   string `json:"database_name"`   // DatabaseName is the database to create/connect to.
 	CollectionName string `json:"collection_name"` // CollectionName is the collection name to put new documents in to
@@ -31,15 +30,15 @@ type StoreParameters struct {
 
 // NewStore creates a new MongoDB backed event store for an
 // application to use.
-func NewStore(params StoreParameters) (eventsourcing.EventStore, error) {
+func NewStore(endpoint Endpoint) (eventsourcing.EventStore, error) {
 	// Connect to the MongoDB services
-	session, errSession := mgo.Dial(params.DialURL)
+	session, errSession := mgo.Dial(endpoint.DialURL)
 	if errSession != nil {
 		return nil, errSession
 	}
 
-	database := session.DB(params.DatabaseName)
-	collection := database.C(params.CollectionName)
+	database := session.DB(endpoint.DatabaseName)
+	collection := database.C(endpoint.CollectionName)
 
 	return NewStoreWithConnection(session, collection)
 }
