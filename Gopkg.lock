@@ -54,6 +54,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
+
+[[projects]]
   branch = "master"
   name = "github.com/steve-gray/mgo-eventsourcing"
   packages = [
@@ -79,8 +85,17 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "1875d0a70c90e57f11972aefd42276df65e895b9"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "ff2a66f350cefa5c93a634eadb5d25bb60c85a9c"
 
 [[projects]]
@@ -98,6 +113,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9c260a4f536fed8c77c1fb520ca465fd50af343616ce58c6b2516994b8ba69d8"
+  inputs-digest = "18e0ca7acb725659f750131cf43a5f5046aceacf171d4d53aea729e1225c6cd0"
   solver-name = "gps-cdcl"
   solver-version = 1
