@@ -116,6 +116,27 @@ type EventStoreWithMiddleware interface {
 	HandleRefresh(middleware RefreshMiddleware)
 }
 
+// EventConsumer is an interface that describes a consumer that allows multiple
+// handlers to be attached, allowing events to be multiplexed to the handlers
+// without needing to consume the same stream multiple times.
+type EventConsumer interface {
+	// Start consuming
+	Start() error
+
+	// Stop consuming
+	Stop() error
+
+	// AddHandler adds a handler to the set of handlers for this consumer.
+	AddHandler(handler EventHandler)
+}
+
+// EventHandler is an interface that handles events that have been delivered from
+// a publishing source
+type EventHandler interface {
+	// Handle the specified event and apply any consequences.
+	Handle(event PublishedEvent) error
+}
+
 // EventPublisher is an interface that describes an event publisher sink that
 // allows events to be distributed to other components.
 type EventPublisher interface {

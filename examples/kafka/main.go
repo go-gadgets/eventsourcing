@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/Shopify/sarama"
-	cluster "github.com/bsm/sarama-cluster"
 	"github.com/gin-gonic/gin"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/distribution/kafka"
@@ -47,66 +45,27 @@ func main() {
 
 // runClient runs a client that listens for messages from kafka
 func runClient(group string) {
-	// init (custom) config, enable errors and notifications
-	config := cluster.NewConfig()
-	config.Consumer.Return.Errors = true
-	config.Consumer.Offsets.Initial = sarama.OffsetOldest
-	config.Group.Return.Notifications = true
-
 	// trap SIGINT to trigger a shutdown.
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
-	// init consumer
 	brokers := []string{broker}
-	topics := []string{topic}
-	consumer, err := cluster.NewConsumer(brokers, group, topics, config)
-	if err != nil {
-		panic(err)
+	consumer, errConsumer := kafka.CreateConsumer(brokers, topic, group, sarama.OffsetOldest)
+	if errConsumer != nil {
+		panic(errConsumer)
 	}
-	defer consumer.Close()
+	handler := &Handler{}
+	handler.Initialize(registry, handler)
+	consumer.AddHandler(handler)
 
-	// consume errors
-	go func() {
-		for err := range consumer.Errors() {
-			logrus.Error(err)
-		}
-	}()
-
-	// consume notifications
-	go func() {
-		for ntf := range consumer.Notifications() {
-			logrus.Info(ntf)
-		}
-	}()
-
-	// consume messages, watch signals
-	consumerType := Consumer{}
-	consumerType.Initialize(registry, &consumerType)
+	errStart := consumer.Start()
+	if errStart != nil {
+		panic(errStart)
+	}
+	defer consumer.Stop()
 
 	for {
 		select {
-		case msg, ok := <-consumer.Messages():
-			if !ok {
-				continue
-			}
-
-			// Unmarshal the published event
-			event := eventsourcing.PublishedEvent{}
-			errUnmarshal := json.Unmarshal(msg.Value, &event)
-			if errUnmarshal != nil {
-				logrus.Error(errUnmarshal)
-				continue
-			}
-
-			errConsume := consumerType.Handle(event)
-			if errConsume != nil {
-				logrus.Error(errConsume)
-				continue
-			}
-
-			// We're done with this message
-			consumer.MarkOffset(msg, "") // mark message as processed
 		case <-signals:
 			return
 		}
@@ -179,13 +138,13 @@ func runPublisher() {
 	}
 }
 
-// Consumer is the projection consumer for the example project
-type Consumer struct {
-	eventsourcing.ConsumerBase
+// Handler is the projection Handler for the example project
+type Handler struct {
+	eventsourcing.EventHandlerBase
 }
 
-// ConsumeIncrementEvent consumes an increment event
-func (consumer *Consumer) ConsumeIncrementEvent(key string, seq int64, evt IncrementEvent) error {
-	fmt.Printf("Consuming %v:%v=%v\n", key, seq, evt)
+// HandleIncrementEvent consumes an increment event
+func (handler *Handler) HandleIncrementEvent(key string, seq int64, evt IncrementEvent) error {
+	fmt.Printf("Handling %v:%v=%v\n", key, seq, evt)
 	return nil
 }

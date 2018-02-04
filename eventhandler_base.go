@@ -8,30 +8,30 @@ import (
 )
 
 const (
-	// ConsumeMethodPrefix is the prefix for Consumer auto-wireup methods
-	ConsumeMethodPrefix = "Consume"
+	// EventHandleMethodPrefix is the prefix for handler auto-wireup methods
+	EventHandleMethodPrefix = "Handle"
 )
 
-// ConsumerBase is a common base type for an event consumer that takes events
+// EventHandlerBase is a common base type for an event handler that takes events
 // from a publishing source and handles them.
-type ConsumerBase struct {
+type EventHandlerBase struct {
 	eventConsumers map[EventType]consumerFunc // event consumer methods
 	registry       EventRegistry              // Registry for summoning events
 }
 
-// Initialize the consumerbase
-func (base *ConsumerBase) Initialize(registry EventRegistry, self interface{}) {
+// Initialize the EventHandlerBase
+func (base *EventHandlerBase) Initialize(registry EventRegistry, self interface{}) {
 	base.registry = registry
 	base.AutomaticWireup(self)
 }
 
 // AutomaticWireup performs automatic detection of consumer methods
-func (base *ConsumerBase) AutomaticWireup(subject interface{}) {
+func (base *EventHandlerBase) AutomaticWireup(subject interface{}) {
 	base.eventConsumers = buildConsumeMappings(subject)
 }
 
 // Handle processes an event
-func (base *ConsumerBase) Handle(event PublishedEvent) error {
+func (base *EventHandlerBase) Handle(event PublishedEvent) error {
 	// If we've got a consumer
 	call, found := base.eventConsumers[event.Type]
 	if !found {
@@ -71,7 +71,7 @@ func buildConsumeMappings(subject interface{}) map[EventType]consumerFunc {
 		candidate := subjectType.Method(methodIndex)
 
 		// Skip methods without prefix
-		if !strings.HasPrefix(candidate.Name, ConsumeMethodPrefix) {
+		if !strings.HasPrefix(candidate.Name, EventHandleMethodPrefix) {
 			continue
 		}
 
