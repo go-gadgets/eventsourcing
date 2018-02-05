@@ -70,7 +70,7 @@ func (store *TestStore) When(key string, offset int64, events []Event, state int
 
 // Close the test store
 func (store *TestStore) Close() error {
-	return nil
+	return store.ErrorFilter()
 }
 
 // CommitEvents stores the events
