@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"bytes"
 	"encoding/json"
 
 	cluster "github.com/bsm/sarama-cluster"
@@ -108,7 +109,9 @@ func (consumer *consumer) handleInternal() {
 
 			// Unmarshal the published event
 			event := eventsourcing.PublishedEvent{}
-			errUnmarshal := json.Unmarshal(msg.Value, &event)
+			decoder := json.NewDecoder(bytes.NewReader(msg.Value))
+			decoder.UseNumber()
+			errUnmarshal := decoder.Decode(&event)
 			if errUnmarshal != nil {
 				logrus.Error(errUnmarshal)
 				continue

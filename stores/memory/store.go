@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/go-gadgets/eventsourcing"
@@ -67,7 +68,9 @@ func (data *state) fetchEvents(key string, seq int64) ([]keyvalue.KeyedEvent, er
 	for index := int(seq); index < len(stream); index++ {
 		// Rehydrate the JSON
 		target := make(map[string]interface{})
-		errUnmarshal := json.Unmarshal(stream[index].body, &target)
+		decoder := json.NewDecoder(bytes.NewReader(stream[index].body))
+		decoder.UseNumber()
+		errUnmarshal := decoder.Decode(&target)
 		if errUnmarshal != nil {
 			return nil, errUnmarshal
 		}

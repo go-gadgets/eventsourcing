@@ -1,6 +1,7 @@
 package snapbase
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -85,7 +86,9 @@ func (mw *middleware) commit(writer eventsourcing.StoreWriterAdapter, next event
 		return errMarshal
 	}
 	cloned := make(map[string]interface{})
-	errClone := json.Unmarshal(snapped, &cloned)
+	decoder := json.NewDecoder(bytes.NewReader(snapped))
+	decoder.UseNumber()
+	errClone := decoder.Decode(&cloned)
 	if errClone != nil {
 		return errClone
 	}
