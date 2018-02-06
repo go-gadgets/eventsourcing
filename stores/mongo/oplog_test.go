@@ -26,7 +26,7 @@ func TestTrackerWriteRead(t *testing.T) {
 
 	initial, errInitial := result.StartPosition()
 	assert.Nil(t, errInitial)
-	assert.Equal(t, int64(0), initial)
+	assert.Equal(t, int64(InitialPositionEdge), initial)
 
 	errUpdate := result.UpdatePosition(int64(1234))
 	assert.Nil(t, errUpdate)
