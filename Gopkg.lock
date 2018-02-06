@@ -90,6 +90,12 @@
   version = "v0.1.1"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -106,6 +112,12 @@
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/serialx/hashring"
+  packages = ["."]
+  revision = "6a9381c5a83e926b9f1fd907395a581e69747e96"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -167,6 +179,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1828a0bdbc4024551ac74041bd375468a01ce3be55f026eb027fc2f7b3050ae6"
+  inputs-digest = "528ffebffed81149a6e517ae6fd334102fd019027aa435972eb9afc5c3053970"
   solver-name = "gps-cdcl"
   solver-version = 1
