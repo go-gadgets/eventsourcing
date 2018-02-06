@@ -10,7 +10,7 @@ go:
 # warnings. But its easier to live with that than massively blow-out the package testing
 # complexity.
 script:
- - docker run -d -p 27017:27017 mongo
+ - docker run -d -p 27017:27017 mongo --master
  - docker run -d -p 2181:2181 -p 9092:9092 --env _KAFKA_advertised_host_name=127.0.0.1 --env _KAFKA_advertised_port=9092 flozano/kafka
  - "echo 'mode: atomic' > coverage.txt"
  - go list ./... | grep -v examples | xargs -n1 -I{} sh -c 'go test  -v -covermode=atomic -coverpkg ./... -coverprofile=coverage.tmp {} && tail -n +2 coverage.tmp >> coverage.txt' 
