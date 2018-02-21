@@ -5,9 +5,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/globalsign/mgo/bson"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	bson.SetJSONTagFallback(true)
+}
 
 // TestTrackerWriteRead checks the oplog tracker can write then read back
 func TestTrackerWriteRead(t *testing.T) {

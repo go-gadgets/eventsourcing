@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/serialx/hashring"
-	"github.com/steve-gray/mgo-eventsourcing"
-	"github.com/steve-gray/mgo-eventsourcing/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type OrderingGuarantee int

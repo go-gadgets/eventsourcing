@@ -12,12 +12,12 @@ import (
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
 	"github.com/go-gadgets/eventsourcing/utilities/test"
 	uuid "github.com/satori/go.uuid"
-	"github.com/steve-gray/mgo-eventsourcing"
-	"github.com/steve-gray/mgo-eventsourcing/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 func init() {
-	bson.SetJSONFallback(true)
+	bson.SetJSONTagFallback(true)
 }
 
 func main() {
@@ -48,7 +48,11 @@ func main() {
 	closer, errStartup := mongo.CreateOplogPublisher(dialURL, mongo.OplogOptions{
 		TargetDatabase: database,
 		CollectionName: collection,
-	}, tracker, test.GetTestRegistry(), reciever)
+		Registry:       test.GetTestRegistry(),
+		Publisher:      reciever,
+		Tracker:        tracker,
+	})
+
 	if errStartup != nil {
 		panic(errStartup)
 	}

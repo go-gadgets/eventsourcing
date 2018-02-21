@@ -31,7 +31,6 @@ The features of this framework are:
   - The AggregateBase type allows for fast creation of aggregates and uses reflection in order to wire-up event replay methods.
 - Simple structure annotations:
   - Just use the `json:"name"` tag on your aggregates/events to persist fields, without worrying about your underlying storage engine.
-  - For Mongo, this required a custom fork of [mgo](https://github.com/globalsign/mgo), found [here](https://github.com/steve-gray/mgo-eventsourcing/).
 
 ## What is Event-Sourcing?
 Event-Sourcing is an architectural pattern in which the state of an entity in your application is modelled as a series of events, mutating the state. For example, we may store the history of a bank account:

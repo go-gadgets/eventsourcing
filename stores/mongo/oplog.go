@@ -1,15 +1,16 @@
 package mongo
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/go-gadgets/eventsourcing"
 	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
 	"github.com/go-gadgets/eventsourcing/stores/mongo/gtm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/steve-gray/mgo-eventsourcing"
-	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
 
 // oplogPublisher is a MongDB oplog tailer that chases the MongoDB oplog for a set
@@ -26,21 +27,34 @@ type oplogPublisher struct {
 
 // OplogOptions contains the options for tailing an oplog.
 type OplogOptions struct {
-	TargetDatabase string // TargetDatabase is the database to read
-	CollectionName string // Collection name
+	TargetDatabase string                       // TargetDatabase is the database to read
+	CollectionName string                       // Collection name
+	Publisher      eventsourcing.EventPublisher // Event publisher
+	Registry       eventsourcing.EventRegistry  // Event registry
+	Tracker        ProgressTracker              // Progress tracker
 }
 
 // CreateOplogPublisher creates a new publisher that consumes events from a MongoDB
 // oplog and propegates them to a target.
-func CreateOplogPublisher(dialURL string, options OplogOptions, tracker ProgressTracker, registry eventsourcing.EventRegistry, inner eventsourcing.EventPublisher) (func() error, error) {
+func CreateOplogPublisher(dialURL string, options OplogOptions) (func() error, error) {
 	// Check we can comnnect to the dial URL
 	session, err := mgo.Dial(dialURL)
 	if err != nil {
 		return nil, err
 	}
-	session.SetMode(mgo.Monotonic, true)
+	return CreateOpLogPublisherFromSession(session, options)
+}
 
-	initial, errInitial := tracker.StartPosition()
+// CreateOpLogPublisherFromSession creates a new publisher that consumes events from a MongoDB
+// oplog and propegates them to a target. This version allows BYO sessions.
+func CreateOpLogPublisherFromSession(session *mgo.Session, options OplogOptions) (func() error, error) {
+	// Validate BSON tag fallback global state
+	if !bson.JSONTagFallbackState() {
+		return nil, fmt.Errorf("You must configure bson.SetJSONTagFallback(true) to use this driver")
+	}
+
+	session.SetMode(mgo.Monotonic, true)
+	initial, errInitial := options.Tracker.StartPosition()
 	if errInitial != nil {
 		return nil, errInitial
 	}
@@ -70,10 +84,10 @@ func CreateOplogPublisher(dialURL string, options OplogOptions, tracker Progress
 		ctx:        ctx,
 		collection: options.CollectionName,
 		database:   options.TargetDatabase,
-		inner:      inner,
-		registry:   registry,
+		inner:      options.Publisher,
+		registry:   options.Registry,
 		terminate:  signals,
-		tracker:    tracker,
+		tracker:    options.Tracker,
 	}
 
 	go pub.runOpLogPublisher()
@@ -183,7 +197,7 @@ const (
 	// InitialPositionTrimHorizon is a constant that indicates a tracker starts at the beginning of time
 	InitialPositionTrimHorizon = int64(-2)
 
-	// Edge indicates a tracker starts at the most recent event and works forward
+	// InitialPositionEdge indicates a tracker starts at the most recent event and works forward
 	InitialPositionEdge = int64(-1)
 )
 

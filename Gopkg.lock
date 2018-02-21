@@ -55,6 +55,18 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/globalsign/mgo"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram"
+  ]
+  revision = "baa28fcb8e7d5dfab92026c0920cb6c9ae72faa2"
+
+[[projects]]
+  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
@@ -126,18 +138,6 @@
   version = "v1.0.4"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/steve-gray/mgo-eventsourcing"
-  packages = [
-    ".",
-    "bson",
-    "internal/json",
-    "internal/sasl",
-    "internal/scram"
-  ]
-  revision = "6f2a776a58b83c0267d1ffb650fb92223a1fe97d"
-
-[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
@@ -179,6 +179,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "528ffebffed81149a6e517ae6fd334102fd019027aa435972eb9afc5c3053970"
+  inputs-digest = "e941f4f933151c1c20a968a9e7846d22e65ea4610fb5c7ac7f140d5b764fad2f"
   solver-name = "gps-cdcl"
   solver-version = 1

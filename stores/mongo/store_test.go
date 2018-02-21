@@ -5,11 +5,16 @@ import (
 	"os"
 	"testing"
 
+	mgo "github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/utilities/test"
 	"github.com/satori/go.uuid"
-	mgo "github.com/steve-gray/mgo-eventsourcing"
 )
+
+func init() {
+	bson.SetJSONTagFallback(true)
+}
 
 func provider() (eventsourcing.EventStore, func(), error) {
 	collectionName := fmt.Sprintf("%s", uuid.NewV4())

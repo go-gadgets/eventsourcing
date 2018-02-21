@@ -1,17 +1,14 @@
 package mongo
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/stores/key-value"
-	"github.com/steve-gray/mgo-eventsourcing"
-	"github.com/steve-gray/mgo-eventsourcing/bson"
 )
-
-func init() {
-	bson.SetJSONFallback(true)
-}
 
 // mongoDBEventStore is a type that represents a MongoDB backed
 // EventStore implementation
@@ -47,6 +44,11 @@ func NewStore(endpoint Endpoint) (eventsourcing.EventStore, error) {
 // and collection. The collection is used to store the records, the session is used
 // to clean up afterward.
 func NewStoreWithConnection(session *mgo.Session, collection *mgo.Collection) (eventsourcing.EventStore, error) {
+	// Validate BSON tag fallback global state
+	if !bson.JSONTagFallbackState() {
+		return nil, fmt.Errorf("You must configure bson.SetJSONTagFallback(true) to use this driver")
+	}
+
 	// Ensure the index exists
 	errIndex := collection.EnsureIndex(mgo.Index{
 		Key:        []string{"key", "sequence"},
