@@ -1,7 +1,10 @@
 language: go
 services:
   - docker
-  
+
+before_install:
+  - pip install awscli
+
 go: 
  - 1.9
  - tip
