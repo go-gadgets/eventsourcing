@@ -46,7 +46,7 @@ func NewStore(endpoint Endpoint) (eventsourcing.EventStore, error) {
 func NewStoreWithConnection(session *mgo.Session, collection *mgo.Collection) (eventsourcing.EventStore, error) {
 	// Validate BSON tag fallback global state
 	if !bson.JSONTagFallbackState() {
-		return nil, fmt.Errorf("You must configure bson.SetJSONTagFallback(true) to use this driver")
+		return nil, fmt.Errorf("You must configure mgo with bson.SetJSONTagFallback(true) to use this driver")
 	}
 
 	// Ensure the index exists

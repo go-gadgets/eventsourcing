@@ -8,8 +8,8 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/go-gadgets/eventsourcing"
 	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
-	"github.com/go-gadgets/eventsourcing/stores/mongo/gtm"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rwynn/gtm"
 	"github.com/sirupsen/logrus"
 )
 

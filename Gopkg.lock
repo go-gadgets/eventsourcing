@@ -120,6 +120,12 @@
   revision = "8732c616f52954686704c8645fe1a9d59e9df7c1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/rwynn/gtm"
+  packages = ["."]
+  revision = "b121b311f3f9d39a19e5d99bcb2243bea356c339"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -179,6 +185,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e941f4f933151c1c20a968a9e7846d22e65ea4610fb5c7ac7f140d5b764fad2f"
+  inputs-digest = "02749e9b747a808eaf64b467564e129bc7397e873437ee2b65f3006cd06f0c1f"
   solver-name = "gps-cdcl"
   solver-version = 1
