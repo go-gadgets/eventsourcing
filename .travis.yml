@@ -22,6 +22,7 @@ script:
  - go list ./... | grep -v examples | xargs -n1 -I{} sh -c 'go test  -v -covermode=atomic -coverpkg ./... -coverprofile=coverage.tmp {} && tail -n +2 coverage.tmp >> coverage.txt' 
  - rm coverage.tmp
  - go test -v -bench=.
+ - go test -v -bench=./stores/dynamo
  - go test -v -bench=./stores/in-memory
  - go test -v -bench=./stores/mongo
 
