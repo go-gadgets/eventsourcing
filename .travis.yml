@@ -14,6 +14,7 @@ go:
 # complexity.
 script:
  - docker run -d -p 8000:8000 dwmkerr/dynamodb -sharedDb
+ - docker run -d --name redis -p 6379:6379 redis:alpine
  - docker run -d -p 27017:27017 mongo --master
  - docker run -d -p 2181:2181 -p 9092:9092 --env _KAFKA_advertised_host_name=127.0.0.1 --env _KAFKA_advertised_port=9092 flozano/kafka
  - aws dynamodb create-table --table-name test-store --attribute-definitions AttributeName=aggregate_key,AttributeType=S AttributeName=seq,AttributeType=N --key-schema AttributeName=aggregate_key,KeyType=HASH AttributeName=seq,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=100,WriteCapacityUnits=100 --endpoint-url http://localhost:8000
