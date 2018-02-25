@@ -15,7 +15,7 @@ func init() {
 }
 
 // Snapshot is the current snapshot for an entity, a JSON structure
-// that can be persisted to the Mongo instance.
+// that can be persisted to the DynamoDB table.
 type snapshot struct {
 	Key      string      `json:"aggregate_key"`
 	Sequence int64       `json:"seq"`
@@ -23,7 +23,7 @@ type snapshot struct {
 }
 
 // Parameters describes the parameters that can be
-// used to cofigure a MongoDB snap store.
+// used to cofigure a DynamoDB snap store.
 type Parameters struct {
 	Lazy         bool  // Lazy mode?
 	SnapInterval int64 `json:"snap_interval"` // SnapInterval is the number of events between snaps
