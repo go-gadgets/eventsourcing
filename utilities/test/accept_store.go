@@ -311,7 +311,7 @@ func MeasureBulkInsertAndReload(b *testing.B, provider StoreProvider) {
 			reload := SimpleAggregate{}
 			reload.Initialize(key, GetTestRegistry(), store)
 			reload.Refresh()
-			assert.Equal(b, 1000, instance.CurrentCount)
+			assert.Equal(b, 1000, reload.CurrentCount)
 		}
 		return nil
 	})
