@@ -21,11 +21,12 @@ The features of this framework are:
 - Low-ceremony:
    - The counter-example is less than 150 lines of code, including snapshot support, Mongo persistence and a web-server API.
 - Pluggable event-store engines:
+  - DynamoDB
   - MongoDB 
   - In-Memory
   - Middleware support
 	  - Ability to mutate store/load operations with custom functions for any store
-    - Snapshotting (MongoDB, In-Memory)
+    - Snapshotting (DynamoDB, MongoDB, In-Memory)
     - Logging (with Logrus)
 - Quick-Start helper types:
   - The AggregateBase type allows for fast creation of aggregates and uses reflection in order to wire-up event replay methods.
