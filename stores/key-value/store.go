@@ -99,7 +99,6 @@ func (store *store) CommitEvents(writer eventsourcing.StoreWriterAdapter) error 
 
 	// Perform the actual put
 	errCommit := store.options.PutEvents(remapped)
-
 	return errCommit
 }
 
