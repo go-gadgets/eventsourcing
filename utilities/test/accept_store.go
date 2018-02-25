@@ -296,7 +296,7 @@ func MeasureIndividualCommits(b *testing.B, provider StoreProvider) {
 func MeasureBulkInsertAndReload(b *testing.B, provider StoreProvider) {
 	executeBench(b, provider, func(store eventsourcing.EventStore) error {
 		for i := 0; i < b.N; i++ {
-			key := fmt.Sprintf("Aggregate-%v", i)
+			key := uuid.NewV4().String()
 			instance := SimpleAggregate{}
 			instance.Initialize(key, GetTestRegistry(), store)
 			instance.Refresh()
