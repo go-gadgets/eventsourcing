@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,6 +14,10 @@ type StoreProvider func() (eventsourcing.EventStore, func(), error)
 
 // ProviderFunc is a test function that runs in the context of a provider
 type ProviderFunc func(store eventsourcing.EventStore) error
+
+func getDummyKey() string {
+	return uuid.NewV4().String()
+}
 
 // execute checks a behaviour for a store implementation using a standard
 // setup/teardown, calling a lambda closure with the provider instance
@@ -51,21 +56,39 @@ func CheckStandardSuite(t *testing.T, name string, provider StoreProvider) {
 
 	fmt.Println("  >> Startup/Shutdown")
 	CheckStartupShutdown(t, provider)
+	if t.Failed() {
+		return
+	}
 
 	fmt.Println("  >> Write new events")
 	CheckWriteReadNew(t, provider)
+	if t.Failed() {
+		return
+	}
 
 	fmt.Println("  >> Fail when unmapped event is passed")
 	CheckUnmappedEvent(t, provider)
+	if t.Failed() {
+		return
+	}
 
 	fmt.Println("  >> Concurrency support")
 	CheckConcurrencyValidation(t, provider)
+	if t.Failed() {
+		return
+	}
 
 	fmt.Println("  >> Write past EOF for aggregate")
 	CheckWritePastEnd(t, provider)
+	if t.Failed() {
+		return
+	}
 
 	fmt.Println("  >> Check repeated read/write cycles")
 	CheckWriteReadWriteRead(t, provider)
+	if t.Failed() {
+		return
+	}
 
 	fmt.Println("  >> Check refresh of dirty aggregate fails")
 	CheckDirtyRefresh(t, provider)
@@ -80,7 +103,8 @@ func CheckStartupShutdown(t *testing.T, provider StoreProvider) {
 func CheckWriteReadNew(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
 		instance := SimpleAggregate{}
-		instance.Initialize("dummy-key", GetTestRegistry(), store)
+		dummyKey := getDummyKey()
+		instance.Initialize(dummyKey, GetTestRegistry(), store)
 
 		instance.ApplyEvent(InitializeEvent{
 			TargetValue: 3,
@@ -92,7 +116,7 @@ func CheckWriteReadNew(t *testing.T, provider StoreProvider) {
 		}
 
 		second := SimpleAggregate{}
-		second.Initialize("dummy-key", GetTestRegistry(), store)
+		second.Initialize(dummyKey, GetTestRegistry(), store)
 		second.Refresh()
 		if second.TargetValue != 3 {
 			return fmt.Errorf("Target value should be 3: got %v", second.TargetValue)
@@ -107,7 +131,8 @@ func CheckWriteReadNew(t *testing.T, provider StoreProvider) {
 func CheckUnmappedEvent(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
 		instance := SimpleAggregate{}
-		instance.Initialize("dummy-key", GetTestRegistry(), store)
+		dummyKey := getDummyKey()
+		instance.Initialize(dummyKey, GetTestRegistry(), store)
 
 		instance.ApplyEvent(UnknownEventTypeExample{})
 
@@ -125,14 +150,15 @@ func CheckUnmappedEvent(t *testing.T, provider StoreProvider) {
 func CheckConcurrencyValidation(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
 		firstInstance := SimpleAggregate{}
-		firstInstance.Initialize("dummy-key", GetTestRegistry(), store)
+		dummyKey := getDummyKey()
+		firstInstance.Initialize(dummyKey, GetTestRegistry(), store)
 		firstInstance.Refresh()
 		firstInstance.ApplyEvent(InitializeEvent{
 			TargetValue: 3,
 		})
 
 		secondInstance := SimpleAggregate{}
-		secondInstance.Initialize("dummy-key", GetTestRegistry(), store)
+		secondInstance.Initialize(dummyKey, GetTestRegistry(), store)
 		secondInstance.Refresh()
 		secondInstance.ApplyEvent(InitializeEvent{
 			TargetValue: 5,
@@ -159,8 +185,9 @@ func CheckConcurrencyValidation(t *testing.T, provider StoreProvider) {
 // CheckWritePastEnd validates you must have an event at N to write at N+1 positions.
 func CheckWritePastEnd(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
+		dummyKey := getDummyKey()
 		writer := &fakeStoreWriter{
-			key:               "dummy-key",
+			key:               dummyKey,
 			eventRegistry:     GetTestRegistry(),
 			uncommittedOrigin: 3,
 			uncommittedEvents: []eventsourcing.Event{
@@ -182,7 +209,8 @@ func CheckWritePastEnd(t *testing.T, provider StoreProvider) {
 func CheckWriteReadWriteRead(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
 		agg := SimpleAggregate{}
-		agg.Initialize("dummy-key", GetTestRegistry(), store)
+		dummyKey := getDummyKey()
+		agg.Initialize(dummyKey, GetTestRegistry(), store)
 		agg.Refresh()
 		agg.ApplyEvent(InitializeEvent{
 			TargetValue: 50,
@@ -192,7 +220,7 @@ func CheckWriteReadWriteRead(t *testing.T, provider StoreProvider) {
 			return errInitial
 		}
 
-		for x := 0; x < 50; x++ {
+		for x := 0; x < 250; x++ {
 			agg.ApplyEvent(IncrementEvent{
 				IncrementBy: 1,
 			})
@@ -215,7 +243,8 @@ func CheckWriteReadWriteRead(t *testing.T, provider StoreProvider) {
 func CheckDirtyRefresh(t *testing.T, provider StoreProvider) {
 	execute(t, provider, func(store eventsourcing.EventStore) error {
 		agg := SimpleAggregate{}
-		agg.Initialize("dummy-key", GetTestRegistry(), store)
+		dummyKey := getDummyKey()
+		agg.Initialize(dummyKey, GetTestRegistry(), store)
 		agg.Refresh()
 		agg.ApplyEvent(InitializeEvent{
 			TargetValue: 50,
@@ -244,8 +273,9 @@ func CheckDirtyRefresh(t *testing.T, provider StoreProvider) {
 // append to an aggregate.
 func MeasureIndividualCommits(b *testing.B, provider StoreProvider) {
 	instance := SimpleAggregate{}
+	dummyKey := getDummyKey()
 	executeBench(b, provider, func(store eventsourcing.EventStore) error {
-		instance.Initialize("dummy-key", GetTestRegistry(), store)
+		instance.Initialize(dummyKey, GetTestRegistry(), store)
 
 		for i := 0; i < b.N; i++ {
 			instance.ApplyEvent(IncrementEvent{
