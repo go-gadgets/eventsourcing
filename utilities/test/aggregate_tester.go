@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/go-gadgets/eventsourcing/stores/memory"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -33,9 +32,8 @@ func (tester *AggregateTester) SetAggregateFactory(factory func(key string, stor
 }
 
 // Run executes an aggregate test
-func (tester *AggregateTester) Run(t *testing.T, test AggregateTest) error {
+func (tester *AggregateTester) Run(t *testing.T, test AggregateTest, store eventsourcing.EventStore) error {
 	aggregateKey := uuid.NewV4().String()
-	store := memory.NewStore()
 
 	// Iterate steps
 	for _, step := range test.Commands {
