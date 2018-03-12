@@ -39,14 +39,14 @@
     "service/dynamodb/dynamodbattribute",
     "service/sts"
   ]
-  revision = "f7f1ee9550cc76ceea731d99c8dbe00a0c39f66d"
-  version = "v1.13.4"
+  revision = "bafcd9ccc717e9bc5406acaea370577299223873"
+  version = "v1.13.11"
 
 [[projects]]
   name = "github.com/bsm/sarama-cluster"
   packages = ["."]
-  revision = "3001c2453136632aa3219a58ea3795bb584b83b5"
-  version = "v2.1.12"
+  revision = "cf455bc755fe41ac9bb2861e7a961833d9c2ecc3"
+  version = "v2.1.13"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -103,8 +103,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
+  revision = "6333e38ac20b8949a8dd68baa3650f4dee8f39f0"
+  version = "v1.33.0"
 
 [[projects]]
   name = "github.com/go-redis/redis"
@@ -118,8 +118,8 @@
     "internal/singleflight",
     "internal/util"
   ]
-  revision = "56dea1f39a5f4a64fe8c639464c966c75f226e3e"
-  version = "v6.9.1"
+  revision = "9133634a132e00309476e2d9acbf0c8058d4c888"
+  version = "v6.10.0"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -184,7 +184,7 @@
   branch = "master"
   name = "github.com/rwynn/gtm"
   packages = ["."]
-  revision = "b121b311f3f9d39a19e5d99bcb2243bea356c339"
+  revision = "2710539292a87efb3ad933a3333053047b79d4b2"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -201,8 +201,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -220,7 +220,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "432090b8f568c018896cd8a0fb0345872bbac6ce"
+  revision = "c7dcf104e3a7a1417abc0230cb0d5240d764159d"
 
 [[projects]]
   branch = "master"
@@ -229,7 +229,7 @@
     "unix",
     "windows"
   ]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
+  revision = "c28acc882ebcbfbe8ce9f0f14b9ac26ee138dd51"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v8"
@@ -238,14 +238,14 @@
   version = "v8.18.2"
 
 [[projects]]
-  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
+  revision = "7f97868eec74b32b0982dd158a51a446d1da7eb5"
+  version = "v2.1.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6b57649c41b61b73da8b305d775409fa080af5a1e10b919835301c55b097ef08"
+  inputs-digest = "c4d49cbea426458e7dc395b9a24342e0fd3c693310d29dd42acfb3a6baa517cb"
   solver-name = "gps-cdcl"
   solver-version = 1
