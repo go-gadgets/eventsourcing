@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/go-gadgets/eventsourcing"
+	"github.com/go-gadgets/eventsourcing/utilities/mapping"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -125,6 +126,7 @@ func (store *store) Refresh(loader eventsourcing.StoreLoaderAdapter) error {
 	for index, event := range loaded {
 		summoned := reg.CreateEvent(event.EventType)
 		config := &mapstructure.DecoderConfig{
+			DecodeHook:       mapping.MapTimeFromJSON,
 			TagName:          "json",
 			Result:           summoned,
 			WeaklyTypedInput: true,

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-gadgets/eventsourcing/utilities/mapping"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -342,6 +343,7 @@ func (adapter *aggregateBaseLoaderAdapter) ReplayEvent(event Event) {
 // state over the top of the aggregate.
 func (adapter *aggregateBaseLoaderAdapter) RestoreSnapshot(sequence int64, snapshot interface{}) error {
 	config := &mapstructure.DecoderConfig{
+		DecodeHook:       mapping.MapTimeFromJSON,
 		TagName:          "json",
 		Result:           adapter.state,
 		WeaklyTypedInput: true,

@@ -8,6 +8,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/go-gadgets/eventsourcing"
 	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
+	"github.com/go-gadgets/eventsourcing/utilities/mapping"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rwynn/gtm"
 	"github.com/sirupsen/logrus"
@@ -156,6 +157,7 @@ func decodeOpLogEntry(data map[string]interface{}, registry eventsourcing.EventR
 
 	// Decode the wrapper
 	wrapperConfig := &mapstructure.DecoderConfig{
+		DecodeHook:       mapping.MapTimeFromJSON,
 		TagName:          "json",
 		Result:           &event,
 		WeaklyTypedInput: true,

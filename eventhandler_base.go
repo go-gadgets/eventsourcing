@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-gadgets/eventsourcing/utilities/mapping"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -40,6 +41,7 @@ func (base *EventHandlerBase) Handle(event PublishedEvent) error {
 
 	summoned := base.registry.CreateEvent(event.Type)
 	config := &mapstructure.DecoderConfig{
+		DecodeHook:       mapping.MapTimeFromJSON,
 		TagName:          "json",
 		Result:           summoned,
 		WeaklyTypedInput: true,
