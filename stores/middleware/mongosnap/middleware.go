@@ -1,10 +1,10 @@
 package mongosnap
 
 import (
-	"github.com/go-gadgets/eventsourcing"
-	"github.com/go-gadgets/eventsourcing/stores/middleware/snapbase"
 	mgo "github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/go-gadgets/eventsourcing"
+	"github.com/go-gadgets/eventsourcing/stores/middleware/snapbase"
 )
 
 func init() {

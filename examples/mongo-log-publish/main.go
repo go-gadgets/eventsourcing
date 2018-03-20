@@ -6,14 +6,14 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/go-gadgets/eventsourcing"
 	"github.com/go-gadgets/eventsourcing/distribution/inproc"
 	keyvalue "github.com/go-gadgets/eventsourcing/stores/key-value"
 	"github.com/go-gadgets/eventsourcing/stores/mongo"
 	"github.com/go-gadgets/eventsourcing/utilities/test"
 	uuid "github.com/satori/go.uuid"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 )
 
 func init() {
