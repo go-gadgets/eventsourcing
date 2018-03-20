@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/go-gadgets/eventsourcing"
-	"github.com/go-gadgets/eventsourcing/stores/memory"
 	"github.com/go-gadgets/eventsourcing/utilities/mapping"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -30,9 +29,7 @@ type AggregateTester interface {
 
 // CreateTester initializes an aggregate tester with the specified commands, event store and
 // aggregate factory.
-func CreateTester(commands eventsourcing.CommandRegistry, factory func(key string, store eventsourcing.EventStore) eventsourcing.AggregateBase) AggregateTester {
-	store := memory.NewStore()
-
+func CreateTester(commands eventsourcing.CommandRegistry, store eventsourcing.EventStore, factory func(key string, store eventsourcing.EventStore) eventsourcing.AggregateBase) AggregateTester {
 	return &aggregateTester{
 		commands: commands,
 		factory:  factory,
