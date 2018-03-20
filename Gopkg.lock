@@ -134,6 +134,18 @@
   revision = "553a641470496b2327abcac10b36396bd98e45c9"
 
 [[projects]]
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/cmpopts",
+    "cmp/internal/diff",
+    "cmp/internal/function",
+    "cmp/internal/value"
+  ]
+  revision = "3af367b6b30c263d47e8895973edcca9a49cf029"
+  version = "v0.2.0"
+
+[[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   revision = "0b12d6b5"
@@ -246,6 +258,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c4d49cbea426458e7dc395b9a24342e0fd3c693310d29dd42acfb3a6baa517cb"
+  inputs-digest = "25bd3830e7ad8b44c1583de8c1ee9f4310e3f99c98220bb2f3be46277b321357"
   solver-name = "gps-cdcl"
   solver-version = 1
