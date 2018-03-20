@@ -100,7 +100,7 @@ func buildConsumeMappings(subject interface{}) map[EventType]consumerFunc {
 
 		// The event is the 4th element (index 3)
 		eventType := candidate.Type.In(3)
-		eventTypeName := EventType(NormalizeEventName(eventType.String()))
+		eventTypeName := EventType(NormalizeTypeName(eventType.String()))
 		eventConsumers[eventTypeName] = handler
 	}
 

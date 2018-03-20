@@ -183,6 +183,12 @@ func (agg *AggregateBase) GetKey() string {
 	return agg.key
 }
 
+// State gets the current state of an aggregate
+// for any process that is interested
+func (agg *AggregateBase) State() interface{} {
+	return agg.stateFunc()
+}
+
 // SequenceNumber gets the current sequence number of the aggregate.
 func (agg *AggregateBase) SequenceNumber() int64 {
 	return agg.sequenceNumber
@@ -300,7 +306,7 @@ func buildReplayMappings(subject interface{}) map[EventType]func(Event) {
 		// The event type is the second parameter in an instance
 		// method, since the first parameter is the instance
 		eventType := candidate.Type.In(1)
-		eventTypeName := EventType(NormalizeEventName(eventType.String()))
+		eventTypeName := EventType(NormalizeTypeName(eventType.String()))
 		eventReplay[eventTypeName] = handler
 	}
 	return eventReplay

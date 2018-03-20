@@ -44,7 +44,7 @@ func (reg standardEventRegistry) Domain() string {
 // RegisterEvent registers an event type with the registry
 func (reg standardEventRegistry) RegisterEvent(event Event) EventType {
 	eventTypeValue := reflect.TypeOf(event)
-	eventTypeName := NormalizeEventName(eventTypeValue.String())
+	eventTypeName := NormalizeTypeName(eventTypeValue.String())
 	eventType := EventType(eventTypeName)
 	reg.events[eventType] = eventTypeValue
 	return eventType
@@ -53,7 +53,7 @@ func (reg standardEventRegistry) RegisterEvent(event Event) EventType {
 // GetEventType determines the event type label for a given event instance.
 func (reg standardEventRegistry) GetEventType(event interface{}) (EventType, bool) {
 	eventTypeValue := reflect.TypeOf(event)
-	eventTypeName := NormalizeEventName(eventTypeValue.String())
+	eventTypeName := NormalizeTypeName(eventTypeValue.String())
 	eventType := EventType(eventTypeName)
 	_, found := reg.events[eventType]
 	return eventType, found

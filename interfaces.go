@@ -65,6 +65,22 @@ type EventDetector func(interface{}) bool
 // given type, ready to work with.
 type EventFactory func() Event
 
+// CommandRegistry defines a per-aggregate type registry of the commands that are
+// known to a specific aggregate.
+type CommandRegistry interface {
+	// CreateCommand creates an instance of an event
+	CreateCommand(CommandType) Command
+
+	// Domain this registry contains commands for
+	Domain() string
+
+	// GetCommandType determines the CommandType of a Command
+	GetCommandType(interface{}) (CommandType, bool)
+
+	// RegisterCommand registers a command
+	RegisterCommand(Command) CommandType
+}
+
 // EventType is a string alias that represents the type of an event.
 type EventType string
 

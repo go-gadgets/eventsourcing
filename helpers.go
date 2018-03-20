@@ -29,8 +29,8 @@ func Retry(limit int, body func() error) error {
 	}
 }
 
-// NormalizeEventName the event name of an event so that we remove the go-supplied package name
-func NormalizeEventName(name string) string {
+// NormalizeTypeName the event name of an event so that we remove the go-supplied package name
+func NormalizeTypeName(name string) string {
 	segments := strings.Split(name, ".")
 	return segments[len(segments)-1]
 }
