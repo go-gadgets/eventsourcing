@@ -19,29 +19,37 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// AggregateTester is an interface type for testing aggregates.
+type AggregateTester interface {
+	// RunRecursive runs al tests from the specified path recursively, looking for files that end in .json
+	RunRecursive(t *testing.T, path string) error
+
+	// Run a single test from the specified suite
+	Run(t *testing.T, test AggregateTest, suite AggregateTests) error
+}
+
+// CreateTester initializes an aggregate tester with the specified commands, event store and
+// aggregate factory.
+func CreateTester(commands eventsourcing.CommandRegistry, factory func(key string, store eventsourcing.EventStore) eventsourcing.AggregateBase) AggregateTester {
+	store := memory.NewStore()
+
+	return &aggregateTester{
+		commands: commands,
+		factory:  factory,
+		store:    store,
+	}
+}
+
 // AggregateTester is a harness that allows for aggregates to be tested
-type AggregateTester struct {
+type aggregateTester struct {
 	commands eventsourcing.CommandRegistry
 	factory  func(key string, store eventsourcing.EventStore) eventsourcing.AggregateBase
-}
-
-// RegisterCommand registers a command with the aggregate tester, allowing it to be summoned
-// during testing. Generally there is no other reason to summon commands dynamically.
-func (tester *AggregateTester) RegisterCommand(command eventsourcing.Command) {
-	if tester.commands == nil {
-		tester.commands = eventsourcing.NewStandardCommandRegistry("test-domain")
-	}
-	tester.commands.RegisterCommand(command)
-}
-
-// SetAggregateFactory sets the aggregate factory instance for this type
-func (tester *AggregateTester) SetAggregateFactory(factory func(key string, store eventsourcing.EventStore) eventsourcing.AggregateBase) {
-	tester.factory = factory
+	store    eventsourcing.EventStore
 }
 
 // RunRecursive runs model tests recursively over a folder, loading in all
 // .json files in the folder.
-func (tester *AggregateTester) RunRecursive(t *testing.T, path string) error {
+func (tester *aggregateTester) RunRecursive(t *testing.T, path string) error {
 	// Find the test files
 	testFiles := []string{}
 	errWalk := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
@@ -68,13 +76,10 @@ func (tester *AggregateTester) RunRecursive(t *testing.T, path string) error {
 		}
 
 		for k, v := range tests {
-			store := memory.NewStore()
-
 			t.Logf(" ==> %v\n", k)
 
-			errTest := tester.Run(t, v, tests, store)
+			errTest := tester.Run(t, v, tests)
 			if errTest != nil {
-				t.Errorf("Failed test %v: %v", k, errTest)
 				return errTest
 			}
 		}
@@ -84,16 +89,20 @@ func (tester *AggregateTester) RunRecursive(t *testing.T, path string) error {
 }
 
 // Run executes an aggregate test
-func (tester *AggregateTester) Run(t *testing.T, test AggregateTest, tests AggregateTests, store eventsourcing.EventStore) error {
+func (tester *aggregateTester) Run(t *testing.T, test AggregateTest, tests AggregateTests) error {
 	aggregateKey := uuid.NewV4().String()
-	return tester.runInternal(t, aggregateKey, test, tests, store)
+	errTest := tester.runInternal(t, aggregateKey, test, tests)
+	if errTest != nil {
+		t.Error(errTest)
+	}
+	return errTest
 }
 
 // runInternal runs an aggregate test
-func (tester *AggregateTester) runInternal(t *testing.T, aggregateKey string, test AggregateTest, tests AggregateTests, store eventsourcing.EventStore) error {
+func (tester *aggregateTester) runInternal(t *testing.T, aggregateKey string, test AggregateTest, tests AggregateTests) error {
 	// If we are inheriting from another test
 	if test.Inherit != "" {
-		errParent := tester.runInternal(t, aggregateKey, tests[test.Inherit], tests, store)
+		errParent := tester.runInternal(t, aggregateKey, tests[test.Inherit], tests)
 		if errParent != nil {
 			return errParent
 		}
@@ -122,7 +131,7 @@ func (tester *AggregateTester) runInternal(t *testing.T, aggregateKey string, te
 		t.Logf("   --> %v: %v, ", step.Type, cmd)
 
 		// Get the aggregate
-		agg := tester.factory(aggregateKey, store)
+		agg := tester.factory(aggregateKey, tester.store)
 		errLoad := agg.Refresh()
 		if errLoad != nil {
 			return errLoad
@@ -147,14 +156,14 @@ func (tester *AggregateTester) runInternal(t *testing.T, aggregateKey string, te
 	// Validate post-state
 	if test.Expect != nil {
 		// Get the aggregate
-		agg := tester.factory(aggregateKey, store)
+		agg := tester.factory(aggregateKey, tester.store)
 		errLoad := agg.Refresh()
 		if errLoad != nil {
 			return errLoad
 		}
 
 		// Convert JSON to target
-		target := tester.factory(aggregateKey, store)
+		target := tester.factory(aggregateKey, tester.store)
 		state := target.State()
 		config := &mapstructure.DecoderConfig{
 			DecodeHook:       mapping.MapTimeFromJSON,
